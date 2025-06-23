@@ -282,3 +282,4 @@ For issues and questions:
 ---
 
 Built with ❤️ using Laravel, GrapesJS, and Filament.
+Madeby Streats22 // StreatsDesign
