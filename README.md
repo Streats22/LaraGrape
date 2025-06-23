@@ -114,17 +114,59 @@ The GrapesJS editor includes:
 
 ### Views
 
-- **pages/show.blade.php**: Frontend page template
+- **components/layout/app.blade.php**: Main application layout
+- **components/layout/header.blade.php**: Site header with navigation
+- **components/layout/footer.blade.php**: Site footer
+- **components/layout/grapejs-edit-bar.blade.php**: GrapesJS edit controls
+- **pages/show.blade.php**: Frontend page template (simplified)
 - **filament/forms/components/grapesjs-editor.blade.php**: GrapesJS editor component
 
 ### Assets
 
-- **grapesjs-editor.js**: Alpine.js component for GrapesJS integration
+- **app.js**: Alpine.js components and site functionality
+- **site.css**: Site-wide styles and component styling
 - **Tailwind CSS**: For styling and responsive design
+
+### Services
+
+- **BlockService**: Dynamic block loading and management
 
 ## 🛠️ Customization
 
-### Adding Custom Blocks
+### Dynamic Block System
+
+LaralGrape includes a powerful dynamic block system that automatically loads blocks from `resources/views/filament/blocks/`. Blocks are organized by category:
+
+```
+resources/views/filament/blocks/
+├── layouts/          # Layout blocks (hero, section, columns)
+├── content/          # Content blocks (text, heading)
+├── media/            # Media blocks (image, video)
+├── forms/            # Form blocks (contact form, newsletter)
+└── components/       # Component blocks (card, button)
+```
+
+#### Creating New Blocks
+
+1. **Choose a category** and create a `.blade.php` file
+2. **Add metadata** at the top of the file:
+
+```blade
+{{-- @block id="my-block" label="My Block" description="A description of my block" --}}
+<div class="my-block">
+    <!-- Your HTML content here -->
+</div>
+```
+
+3. **Make elements editable** with GrapesJS attributes:
+
+```blade
+<h3 data-gjs-type="text" data-gjs-name="title">Editable Title</h3>
+```
+
+See `BLOCKS_README.md` for detailed documentation.
+
+### Adding Custom Blocks (Legacy Method)
 
 Edit `resources/js/grapesjs-editor.js` and add new blocks to the `blockManager.blocks` array:
 
@@ -157,14 +199,33 @@ app/
 │   ├── Forms/Components/     # Custom Filament form components
 │   └── Resources/            # Filament admin resources
 ├── Http/Controllers/         # Web controllers
-└── Models/                   # Eloquent models
+├── Models/                   # Eloquent models
+└── Services/                 # Application services
 
 resources/
 ├── js/                       # JavaScript files
-├── views/
-│   ├── filament/            # Filament view overrides
-│   └── pages/               # Frontend page templates
-└── css/                     # Stylesheets
+│   └── app.js               # Alpine.js components
+├── css/                      # Stylesheets
+│   ├── app.css              # Main CSS with imports
+│   └── site.css             # Site-specific styles
+└── views/
+    ├── components/           # Reusable components
+    │   ├── layout/          # Layout components
+    │   │   ├── app.blade.php
+    │   │   ├── header.blade.php
+    │   │   ├── footer.blade.php
+    │   │   └── grapejs-edit-bar.blade.php
+    │   ├── blocks/          # Block components (future)
+    │   └── forms/           # Form components (future)
+    ├── filament/
+    │   ├── blocks/          # Dynamic block system
+    │   │   ├── layouts/     # Layout blocks
+    │   │   ├── content/     # Content blocks
+    │   │   ├── media/       # Media blocks
+    │   │   ├── forms/       # Form blocks
+    │   │   └── components/  # Component blocks
+    │   └── forms/components/ # Filament form components
+    └── pages/               # Frontend page templates
 
 database/
 └── migrations/              # Database migrations
