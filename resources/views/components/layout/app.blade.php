@@ -29,6 +29,12 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
     
+    <!-- Font Awesome for GrapesJS icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- GrapesJS CSS for frontend editor -->
+    <link rel="stylesheet" href="https://unpkg.com/grapesjs@0.22.8/dist/css/grapes.min.css">
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -43,21 +49,20 @@
     @include('components.layout.header')
 
     <!-- Main Content -->
-    <main class="laralgrape-container">
+    <main class="laralgrape-container min-h-screen flex flex-col">
         <!-- Page Content -->
-        <div class="page-content">
-            @php
-                $blocks = $page->grapesjs_data ?? [];
-            @endphp
-
-            @foreach($blocks as $block)
-                @includeIf('blocks.' . $block['type'], $block['props'] ?? [])
-            @endforeach
+        <div class="page-content flex-1">
+            {!! $renderedHtml !!}
         </div>
         
         @if(auth()->check())
             <!-- GrapesJS Editor Container (hidden by default) -->
-            <div id="grapejs-frontend-editor" style="display:none;"></div>
+            <div class="grapejs-editor-wrapper" style="display:none; height: 100%; background: white;">
+                <div class="grapejs-editor-flex" style="display: flex; height: 100%;">
+                    <div id="grapejs-blocks-sidebar" style="width: 320px; min-width: 220px; max-width: 400px; background: #232323; border-right: 1px solid #e5e7eb; overflow-y: auto;"></div>
+                    <div id="grapejs-frontend-editor" style="height: 100%; flex: 1 1 0%;"></div>
+                </div>
+            </div>
         @endif
     </main>
 

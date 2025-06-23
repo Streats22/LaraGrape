@@ -1,9 +1,9 @@
 <div 
     x-data="grapejsEditBar()"
     class="grapejs-edit-bar"
-    style="background:#1e293b;color:white;padding:8px 0;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.08);font-size:15px;"
+    style="background:linear-gradient(135deg, #7c3aed, #5b21b6);color:white;padding:8px 0;text-align:center;box-shadow:0 2px 8px rgba(124,58,237,0.2);font-size:15px;"
 >
-    <span>Edit this page with GrapesJS</span>
+    <span class="font-medium">🍇 Edit this page with GrapesJS</span>
     <button 
         @click="startEditing()"
         x-show="!isEditing"
@@ -26,17 +26,26 @@
     >
         Exit
     </button>
+    
+    <!-- Status message -->
+    <div 
+        x-show="saveStatus"
+        x-transition
+        class="save-status"
+        style="display:none;margin-top:8px;font-weight:500;"
+    ></div>
 </div>
 
 <style>
     .grapejs-btn {
         margin-left: 8px;
         padding: 6px 18px;
-        border-radius: 6px;
+        border-radius: 8px;
         border: none;
         cursor: pointer;
         font-weight: 500;
         transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
     .grapejs-btn:disabled {
@@ -45,12 +54,14 @@
     }
     
     .grapejs-btn-primary {
-        background: #3b82f6;
+        background: #8b5cf6;
         color: white;
     }
     
     .grapejs-btn-primary:hover:not(:disabled) {
-        background: #2563eb;
+        background: #7c3aed;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     }
     
     .grapejs-btn-success {
@@ -60,6 +71,8 @@
     
     .grapejs-btn-success:hover:not(:disabled) {
         background: #059669;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     }
     
     .grapejs-btn-danger {
@@ -69,5 +82,13 @@
     
     .grapejs-btn-danger:hover:not(:disabled) {
         background: #dc2626;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .save-status {
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 14px;
     }
 </style> 

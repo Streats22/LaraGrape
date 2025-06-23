@@ -1,4 +1,4 @@
-{{-- @block id="image" label="Image" description="An image block with placeholder and alt text" --}}
+{{-- @block id="image" label="Image" description="An image block with placeholder and alt text" icon="fas fa-image" --}}
 <div class="image-block text-center py-8">
     <img src="https://via.placeholder.com/800x400" 
          alt="Placeholder image" 

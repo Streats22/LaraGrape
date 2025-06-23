@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\CustomBlock;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
@@ -29,19 +30,41 @@ class BlockService
     {
         $blocks = [];
         
-        if (!File::exists($this->blocksPath)) {
-            return $blocks;
+        // Get file-based blocks
+        if (File::exists($this->blocksPath)) {
+            $directories = File::directories($this->blocksPath);
+            
+            foreach ($directories as $directory) {
+                $category = basename($directory);
+                $categoryBlocks = $this->scanDirectory($directory);
+                
+                if (!empty($categoryBlocks)) {
+                    $blocks[$category] = $categoryBlocks;
+                }
+            }
         }
         
-        $directories = File::directories($this->blocksPath);
+        // Get custom blocks from database
+        $customBlocks = CustomBlock::active()->ordered()->get();
         
-        foreach ($directories as $directory) {
-            $category = basename($directory);
-            $categoryBlocks = $this->scanDirectory($directory);
+        foreach ($customBlocks as $customBlock) {
+            $category = $customBlock->category;
             
-            if (!empty($categoryBlocks)) {
-                $blocks[$category] = $categoryBlocks;
+            if (!isset($blocks[$category])) {
+                $blocks[$category] = [];
             }
+            
+            $blocks[$category][] = [
+                'id' => 'custom-' . $customBlock->slug,
+                'label' => $customBlock->name,
+                'category' => $category,
+                'content' => $customBlock->getCompleteContent(),
+                'attributes' => $customBlock->attributes ?? [],
+                'description' => $customBlock->description,
+                'icon' => $customBlock->icon,
+                'is_custom' => true,
+                'custom_block_id' => $customBlock->id,
+            ];
         }
         
         return $blocks;
@@ -94,6 +117,7 @@ class BlockService
             'attributes' => $metadata['attributes'] ?? [],
             'description' => $metadata['description'] ?? '',
             'icon' => $metadata['icon'] ?? null,
+            'is_custom' => false,
         ];
     }
     
@@ -165,11 +189,28 @@ class BlockService
                     'content' => $block['content'],
                     'attributes' => $block['attributes'],
                     'description' => $block['description'],
+                    'icon' => $block['icon'] ?? $this->getDefaultIconForCategory($category),
+                    'is_custom' => $block['is_custom'] ?? false,
                 ];
             }
         }
         
         return $grapesJsBlocks;
+    }
+    
+    /**
+     * Get default icon for a category
+     */
+    protected function getDefaultIconForCategory(string $category): string
+    {
+        return match ($category) {
+            'layouts' => 'fas fa-th-large',
+            'content' => 'fas fa-align-left',
+            'media' => 'fas fa-image',
+            'forms' => 'fas fa-wpforms',
+            'components' => 'fas fa-cube',
+            default => 'fas fa-cube',
+        };
     }
     
     /**
@@ -190,10 +231,44 @@ class BlockService
                     'content' => $block['content'],
                     'attributes' => $block['attributes'],
                     'description' => $block['description'],
+                    'is_custom' => $block['is_custom'] ?? false,
                 ];
             }
         }
         
         return $organized;
+    }
+    
+    /**
+     * Get custom blocks only
+     */
+    public function getCustomBlocks(): array
+    {
+        return CustomBlock::active()->ordered()->get()->map(function ($block) {
+            return $block->getGrapesJsConfig();
+        })->toArray();
+    }
+    
+    /**
+     * Get file-based blocks only
+     */
+    public function getFileBlocks(): array
+    {
+        $blocks = [];
+        
+        if (File::exists($this->blocksPath)) {
+            $directories = File::directories($this->blocksPath);
+            
+            foreach ($directories as $directory) {
+                $category = basename($directory);
+                $categoryBlocks = $this->scanDirectory($directory);
+                
+                if (!empty($categoryBlocks)) {
+                    $blocks[$category] = $categoryBlocks;
+                }
+            }
+        }
+        
+        return $blocks;
     }
 } 

@@ -49,10 +49,24 @@ class PageController extends Controller
      */
     public function saveGrapesJs(Request $request, string $slug): JsonResponse
     {
+        // Debug logging
+        \Log::info('GrapesJS save request', [
+            'slug' => $slug,
+            'user' => auth()->id(),
+            'request_data' => $request->all()
+        ]);
+        
+        // Check authentication
+        if (!auth()->check()) {
+            \Log::warning('Unauthorized GrapesJS save attempt', ['slug' => $slug]);
+            return response()->json(['error' => 'Authentication required'], 401);
+        }
+        
         // Find the page
         $page = Page::where('slug', $slug)->first();
         
         if (!$page) {
+            \Log::error('Page not found for save', ['slug' => $slug]);
             return response()->json(['error' => 'Page not found'], 404);
         }
         
@@ -71,11 +85,18 @@ class PageController extends Controller
                 'saved_by' => auth()->id(),
             ];
             
+            \Log::info('Saving GrapesJS data', [
+                'page_id' => $page->id,
+                'grapesjs_data' => $grapesjsData
+            ]);
+            
             // Update the page
             $page->update([
                 'grapesjs_data' => $grapesjsData,
                 'updated_at' => now(),
             ]);
+            
+            \Log::info('GrapesJS data saved successfully', ['page_id' => $page->id]);
             
             return response()->json([
                 'success' => true,
@@ -84,6 +105,12 @@ class PageController extends Controller
             ]);
             
         } catch (\Exception $e) {
+            \Log::error('Failed to save GrapesJS data', [
+                'page_id' => $page->id ?? null,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'error' => 'Failed to save page content',
                 'message' => $e->getMessage()
