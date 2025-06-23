@@ -6,6 +6,7 @@ use App\Models\Page;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\Response;
+use Illuminate\Http\JsonResponse;
 
 class PageController extends Controller
 {
@@ -41,6 +42,53 @@ class PageController extends Controller
         $renderedHtml = $this->renderGrapesJsContent($page);
         
         return view('pages.show', compact('page', 'renderedHtml'));
+    }
+    
+    /**
+     * Save GrapesJS content from frontend editor
+     */
+    public function saveGrapesJs(Request $request, string $slug): JsonResponse
+    {
+        // Find the page
+        $page = Page::where('slug', $slug)->first();
+        
+        if (!$page) {
+            return response()->json(['error' => 'Page not found'], 404);
+        }
+        
+        // Validate the request
+        $request->validate([
+            'html' => 'required|string',
+            'css' => 'nullable|string',
+        ]);
+        
+        try {
+            // Prepare the GrapesJS data
+            $grapesjsData = [
+                'html' => $request->input('html'),
+                'css' => $request->input('css', ''),
+                'saved_at' => now()->toISOString(),
+                'saved_by' => auth()->id(),
+            ];
+            
+            // Update the page
+            $page->update([
+                'grapesjs_data' => $grapesjsData,
+                'updated_at' => now(),
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Page content saved successfully',
+                'saved_at' => now()->toISOString(),
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to save page content',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
     
     /**
