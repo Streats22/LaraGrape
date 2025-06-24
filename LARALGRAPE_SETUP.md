@@ -1,4 +1,4 @@
-# 🍇 LaralGrape Setup Complete!
+# 🍇 LaraGrape Setup Complete!
 
 Your LaralGrape boilerplate has been successfully created and configured. Here's what was set up:
 
