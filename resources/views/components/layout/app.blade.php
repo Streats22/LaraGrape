@@ -33,13 +33,21 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- GrapesJS CSS for frontend editor -->
-    <link rel="stylesheet" href="https://unpkg.com/grapesjs@0.22.8/dist/css/grapes.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/grapesjs@0.22.8/dist/css/grapes.min.css">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Vite Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <!-- GrapesJS CSS last -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/grapesjs@0.22.8/dist/css/grapes.min.css">
+    <style>
+        /* Only set min-height for the editor wrapper */
+        .grapejs-editor-wrapper {
+            min-height: 700px;
+        }
+    </style>
 </head>
 <body class="bg-white text-gray-900 antialiased" x-data="siteLayout()">
     @if(auth()->check())
@@ -57,11 +65,8 @@
         
         @if(auth()->check())
             <!-- GrapesJS Editor Container (hidden by default) -->
-            <div class="grapejs-editor-wrapper" style="display:none; height: 100%; background: white;">
-                <div class="grapejs-editor-flex" style="display: flex; height: 100%;">
-                    <div id="grapejs-blocks-sidebar" style="width: 320px; min-width: 220px; max-width: 400px; background: #232323; border-right: 1px solid #e5e7eb; overflow-y: auto;"></div>
-                    <div id="grapejs-frontend-editor" style="height: 100%; flex: 1 1 0%;"></div>
-                </div>
+            <div class="grapejs-editor-wrapper" style="display:none; min-height: 700px;">
+                <div id="grapejs-frontend-editor" style="min-height: 700px;"></div>
             </div>
         @endif
     </main>
@@ -76,13 +81,14 @@
         @endphp
         
         <!-- Load GrapesJS CSS/JS -->
-        <link rel="stylesheet" href="https://unpkg.com/grapesjs@0.22.8/dist/css/grapes.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/grapesjs@0.22.8/dist/css/grapes.min.css">
         <script src="https://unpkg.com/grapesjs@0.22.8/dist/grapes.min.js"></script>
         
         <!-- Pass data to JavaScript -->
         <script>
             window.grapesjsBlocks = @json($grapesjsBlocks);
             window.pageGrapesjsData = @json($page->grapesjs_data ?? []);
+            window.saveGrapesjsUrl = "{{ route('page.save-grapesjs', ['slug' => $page->slug]) }}";
         </script>
     @endif
 </body>

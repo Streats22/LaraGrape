@@ -139,3 +139,7 @@ All components are mobile-first and responsive:
 ---
 
 **The modular system makes LaralGrape more maintainable and extensible! 🎉** 
+
+blockManager: {
+  appendTo: '#gjs-blocks', // This should be a sidebar div
+} 

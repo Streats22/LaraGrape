@@ -155,6 +155,21 @@ export default function grapesJsEditor({
             if (isDisabled) {
                 this.editor.Commands.run('core:canvas-clear');
             }
+            
+            // After initializing the editor (this.editor = grapesjs.init({...}))
+            this.editor.Panels.addButton('options', [{
+                id: 'save-db',
+                className: 'fa fa-save',
+                label: 'Save',
+                command: () => {
+                    const html = this.editor.getHtml();
+                    const css = this.editor.getCss();
+                    // If using Alpine:
+                    this.state = JSON.stringify({ html, css });
+                    // If using Livewire, you may need to call $wire.set('grapesjs_data', ...)
+                    alert('Content ready to be saved! Now click the Filament Save button.');
+                }
+            }]);
         },
         
         updateState() {

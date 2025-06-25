@@ -82,7 +82,7 @@ Alpine.data('grapejsEditBar', () => ({
             
             console.log('CSRF Token:', csrfToken);
             
-            const saveUrl = window.location.pathname + '/save-grapesjs';
+            const saveUrl = window.saveGrapesjsUrl;
             console.log('Save URL:', saveUrl);
             
             const response = await fetch(saveUrl, {
@@ -162,30 +162,27 @@ Alpine.data('grapejsEditBar', () => ({
     },
     
     initializeGrapesJS() {
-        // Load blocks from PHP
-        const blocks = window.grapesjsBlocks || [];
-        
-        console.log('Initializing GrapesJS with blocks:', blocks);
+        // Ensure the container is visible and has a min-height before initializing
+        const wrapper = document.querySelector('.grapejs-editor-wrapper');
+        if (wrapper) wrapper.style.display = 'block';
+        const container = document.getElementById('grapejs-frontend-editor');
+        if (container) container.style.minHeight = '700px';
         
         this.grapejsEditor = grapesjs.init({
             container: '#grapejs-frontend-editor',
             width: '100%',
+            height: '700px',
             fromElement: false,
-            showOffsets: true,
-            noticeOnUnload: false,
             storageManager: false,
+            plugins: [],
             canvas: {
                 styles: [
-                    'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css'
+                    'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css',
+                    '/css/app.css',
+                    '/build/assets/app.css',
+                    '/css/site.css',
                 ],
                 scripts: [],
-            },
-            blockManager: {
-                appendTo: '#grapejs-frontend-editor',
-                blocks: blocks.map(block => ({
-                    ...block,
-                    media: block.icon ? `<i class="${block.icon}"></i>` : '<i class="fas fa-cube"></i>'
-                }))
             },
             // Style manager configuration
             styleManager: {
@@ -217,65 +214,56 @@ Alpine.data('grapejsEditBar', () => ({
                     }
                 ]
             },
-            // Layer manager configuration
-            layerManager: {
-                appendTo: null
-            },
-            // Panel manager configuration
-            panels: {
-                defaults: [
-                    {
-                        id: 'basic-actions',
-                        el: '.panel__basic-actions',
-                        buttons: [
-                            {
-                                id: 'visibility',
-                                active: true,
-                                className: 'btn-toggle-borders',
-                                label: '<u>B</u>',
-                                command: 'sw-visibility',
-                            }
-                        ],
-                    }
-                ]
-            },
-            // Device manager configuration
-            deviceManager: {
-                devices: [
-                    {
-                        name: 'Desktop',
-                        width: '',
-                    },
-                    {
-                        name: 'Tablet',
-                        width: '768px',
-                        widthMedia: '992px',
-                    },
-                    {
-                        name: 'Mobile',
-                        width: '320px',
-                        widthMedia: '480px',
-                    }
-                ]
-            }
         });
         
-        // Load existing content if available
+        console.log('GrapesJS initialized successfully');
+        
+        // Load content
         const pageData = window.pageGrapesjsData;
         if (pageData && pageData.html) {
-            console.log('Loading existing content:', pageData);
             this.grapejsEditor.setComponents(pageData.html);
         }
         if (pageData && pageData.css) {
             this.grapejsEditor.setStyle(pageData.css);
         }
         
-        console.log('GrapesJS initialized successfully');
-        
-        // Open the block manager panel by default
-        if (this.grapejsEditor.Panels.getButton('views', 'open-blocks')) {
-            this.grapejsEditor.Panels.getButton('views', 'open-blocks').set('active', true);
+        // Add blocks after initialization
+        const blocks = window.grapesjsBlocks || [];
+        console.log('Blocks from PHP:', blocks);
+        if (blocks.length === 0) {
+            console.warn('No blocks found to register with GrapesJS.');
         }
+        blocks.forEach(block => {
+            if (!block.id || !block.label || !block.content) {
+                console.error('Block missing required property:', block);
+                return;
+            }
+            if (!block.media && block.icon) {
+                block.media = `<i class="${block.icon}"></i>`;
+            }
+            if (block.content && typeof block.content === 'string') {
+                block.content = block.content.replace(
+                    /https?:\/\/via\.placeholder\.com\/800x400/g,
+                    '/images/placeholder.png'
+                );
+            }
+            try {
+                this.grapejsEditor.BlockManager.add(block.id, block);
+                console.log('Registered block:', block.id, block.label);
+            } catch (e) {
+                console.error('Error registering block:', block, e);
+            }
+        });
+        // Try to open the block manager panel after a short delay
+        setTimeout(() => {
+            if (this.grapejsEditor && this.grapejsEditor.Panels && this.grapejsEditor.Panels.getButton) {
+                const openBlocksBtn = this.grapejsEditor.Panels.getButton('views', 'open-blocks');
+                if (openBlocksBtn) openBlocksBtn.set('active', true);
+                else console.warn('Block manager button not found.');
+            } else {
+                console.warn('Block manager panel/button not available yet.');
+            }
+        }, 500);
     }
 }));
 
