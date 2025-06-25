@@ -50,8 +50,9 @@ class SiteSettingsResource extends Resource
                                             ->schema([
                                                 TextInput::make('site_name')
                                                     ->label('Site Name')
-                                                    ->default('LaralGrape')
-                                                    ->helperText('The name of your website'),
+                                                    ->helperText('The name of your website')
+                                                    ->default('LaraGrape')
+                                                    ->required(),
                                                 
                                                 TextInput::make('site_tagline')
                                                     ->label('Site Tagline')
@@ -99,8 +100,9 @@ class SiteSettingsResource extends Resource
                                             ->schema([
                                                 TextInput::make('header_logo_text')
                                                     ->label('Logo Text')
-                                                    ->default('LaralGrape')
-                                                    ->helperText('Text to display as logo'),
+                                                    ->helperText('Text to display as logo')
+                                                    ->default('LaraGrape')
+                                                    ->required(),
                                                 
                                                 FileUpload::make('header_logo_image')
                                                     ->label('Logo Image')
@@ -152,8 +154,9 @@ class SiteSettingsResource extends Resource
                                             ->schema([
                                                 TextInput::make('footer_logo_text')
                                                     ->label('Footer Logo Text')
-                                                    ->default('LaralGrape')
-                                                    ->helperText('Text to display in footer'),
+                                                    ->helperText('Text to display in footer')
+                                                    ->default('LaraGrape')
+                                                    ->required(),
                                                 
                                                 FileUpload::make('footer_logo_image')
                                                     ->label('Footer Logo Image')
@@ -175,9 +178,9 @@ class SiteSettingsResource extends Resource
                                         
                                         Textarea::make('footer_content')
                                             ->label('Footer Content')
-                                            ->rows(4)
-                                            ->default('© 2024 LaralGrape. All rights reserved.')
-                                            ->helperText('Main footer content (supports HTML)'),
+                                            ->helperText('Main footer content (supports HTML)')
+                                            ->default('© 2024 LaraGrape. All rights reserved.')
+                                            ->rows(3),
                                         
                                         Grid::make(2)
                                             ->schema([
@@ -211,8 +214,9 @@ class SiteSettingsResource extends Resource
                                             ->schema([
                                                 TextInput::make('seo_title')
                                                     ->label('Default Page Title')
-                                                    ->default('LaralGrape - Web Development Boilerplate')
-                                                    ->helperText('Default title for pages without custom title'),
+                                                    ->helperText('Default title for pages without custom title')
+                                                    ->default('My Website - Web Development')
+                                                    ->maxLength(60),
                                                 
                                                 TextInput::make('seo_keywords')
                                                     ->label('Default Keywords')

@@ -1,6 +1,6 @@
 # 🧱 Dynamic Block System
 
-The LaralGrape boilerplate now includes a dynamic block loading system that automatically scans and loads blocks from the `resources/views/filament/blocks/` directory structure.
+The LaraGrape boilerplate now includes a dynamic block loading system that automatically scans and loads blocks from the `resources/views/filament/blocks/` directory structure.
 
 ## 📁 Block Organization
 
@@ -134,4 +134,4 @@ The block system automatically reloads when:
 
 **Happy block building! 🧱**
 
-The dynamic block system makes it easy to create, organize, and maintain reusable components for your LaralGrape projects. 
+The dynamic block system makes it easy to create, organize, and maintain reusable components for your LaraGrape projects. 

@@ -6,7 +6,7 @@ use Filament\Support\Assets\Js;
 use Filament\Support\Facades\FilamentAsset;
 use Illuminate\Support\ServiceProvider;
 
-class LaralGrapeServiceProvider extends ServiceProvider
+class LaraGrapeServiceProvider extends ServiceProvider
 {
     /**
      * Register services.

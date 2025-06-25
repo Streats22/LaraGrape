@@ -89,7 +89,7 @@ class TailwindConfig extends Model
     public function generateCssVariables(): string
     {
         $variables = [];
-        $prefix = $this->css_variables_prefix ?? '--laralgrape';
+        $prefix = $this->css_variables_prefix ?? '--laragrape';
 
         // Primary colors
         $colors = ['50', '100', '200', '300', '400', '500', '600', '700', '800', '900', '950'];

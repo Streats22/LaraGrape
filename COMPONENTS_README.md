@@ -1,6 +1,6 @@
 # 🧩 Modular Component System
 
-LaralGrape now uses a modular component system with Alpine.js for better organization and maintainability.
+LaraGrape now uses a modular component system with Alpine.js for better organization and maintainability.
 
 ## 📁 Component Structure
 
@@ -138,7 +138,7 @@ All components are mobile-first and responsive:
 
 ---
 
-**The modular system makes LaralGrape more maintainable and extensible! 🎉** 
+**The modular system makes LaraGrape more maintainable and extensible! 🎉** 
 
 blockManager: {
   appendTo: '#gjs-blocks', // This should be a sidebar div

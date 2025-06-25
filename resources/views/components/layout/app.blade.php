@@ -40,23 +40,30 @@
         'resources/css/app.css', 
         'resources/js/app.js'
     ])
-    
-    <style>
-        /* Only set min-height for the editor wrapper */
-        .grapejs-editor-wrapper {
-            min-height: 700px;
-        }
-    </style>
+    @php
+        $branding = app(\App\Services\SiteSettingsService::class)->getBranding();
+        $activeTailwindConfig = \App\Models\TailwindConfig::getActive();
+    @endphp
+    @if($activeTailwindConfig)
+        <style id="dynamic-tailwind-config">
+            {!! $activeTailwindConfig->generateCss() !!}
+        </style>
+    @endif
 </head>
 <body class="bg-white text-gray-900 antialiased" x-data="siteLayout()">
     @if(auth()->check())
         @include('components.layout.grapejs-edit-bar')
     @endif
 
+    @php
+        $branding = app(\App\Services\SiteSettingsService::class)->getBranding();
+    @endphp
+
     @include('components.layout.header')
+    </header>
 
     <!-- Main Content -->
-    <main class="laralgrape-container min-h-screen flex flex-col">
+    <main class="laragrape-container min-h-screen flex flex-col">
         <!-- Page Content -->
         <div class="page-content flex-1">
             {!! $renderedHtml !!}

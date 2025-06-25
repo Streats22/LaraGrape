@@ -1,6 +1,6 @@
 # 🍇 LaraGrape Setup Complete!
 
-Your LaralGrape boilerplate has been successfully created and configured. Here's what was set up:
+Your LaraGrape boilerplate has been successfully created and configured. Here's what was set up:
 
 ## 📋 What's Included
 
@@ -103,7 +103,7 @@ app/
 │   └── Resources/PageResource.php
 ├── Http/Controllers/PageController.php
 ├── Models/Page.php
-└── Providers/LaralGrapeServiceProvider.php
+└── Providers/LaraGrapeServiceProvider.php
 
 resources/
 ├── js/
@@ -130,7 +130,7 @@ database/migrations/
 
 ## 🤝 Contributing
 
-Feel free to extend LaralGrape with:
+Feel free to extend LaraGrape with:
 - New GrapesJS blocks and plugins
 - Additional Filament resources
 - Frontend theme variants
@@ -138,6 +138,6 @@ Feel free to extend LaralGrape with:
 
 ---
 
-**Happy building with LaralGrape! 🍇**
+**Happy building with LaraGrape! 🍇**
 
 Built with ❤️ using Laravel, GrapesJS, and Filament.

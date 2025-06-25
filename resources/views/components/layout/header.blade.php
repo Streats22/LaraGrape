@@ -1,5 +1,6 @@
 @php
     $siteSettings = app(\App\Services\SiteSettingsService::class);
+    $branding = $siteSettings->getBranding();
     $headerSettings = $siteSettings->getHeaderSettings();
     $generalSettings = $siteSettings->getGeneralSettings();
 @endphp
@@ -13,13 +14,11 @@
             <!-- Logo/Brand -->
             <div class="flex items-center">
                 <a href="{{ route('home') }}" class="flex items-center space-x-2">
-                    @if($headerSettings['logo_image'])
-                        <img src="{{ Storage::url($headerSettings['logo_image']) }}" 
-                             alt="{{ $generalSettings['site_name'] }}" 
-                             class="h-8 w-auto">
+                    @if($branding['logo_image'])
+                        <img src="{{ Storage::url($branding['logo_image']) }}" alt="{{ $branding['logo_text'] }}" class="h-8 w-auto">
                     @else
                         <div class="text-2xl font-bold text-purple-600">
-                            {{ $headerSettings['logo_text'] }}
+                            {{ $branding['logo_text'] }}
                         </div>
                     @endif
                 </a>

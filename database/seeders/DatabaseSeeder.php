@@ -25,7 +25,7 @@ class DatabaseSeeder extends Seeder
         TailwindConfig::firstOrCreate(
             ['name' => 'Default Theme'],
             [
-                'description' => 'Default purple theme for LaralGrape',
+                'description' => 'Default purple theme for LaraGrape',
                 'is_active' => true,
                 'primary_50' => '#f0f9ff',
                 'primary_100' => '#e0f2fe',
@@ -62,7 +62,7 @@ class DatabaseSeeder extends Seeder
                 'custom_css' => null,
                 'enable_dark_mode' => false,
                 'enable_animations' => true,
-                'css_variables_prefix' => '--laralgrape',
+                'css_variables_prefix' => '--laragrape',
                 'purge_css' => true,
                 'minify_css' => true,
             ]

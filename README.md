@@ -135,7 +135,7 @@ The GrapesJS editor includes:
 
 ### Dynamic Block System
 
-LaralGrape includes a powerful dynamic block system that automatically loads blocks from `resources/views/filament/blocks/`. Blocks are organized by category:
+LaraGrape includes a powerful dynamic block system that automatically loads blocks from `resources/views/filament/blocks/`. Blocks are organized by category:
 
 ```
 resources/views/filament/blocks/
