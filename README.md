@@ -1,4 +1,4 @@
-# 🍇 LaralGrape - Laravel + GrapesJS + Filament Boilerplate
+# 🍇 LaraGrape - Laravel + GrapesJS + Filament Boilerplate
 
 A powerful and modern web development boilerplate that combines:
 - **Laravel** - Robust PHP framework
