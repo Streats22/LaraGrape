@@ -8,7 +8,9 @@ export default defineConfig({
             input: [
                 'resources/css/app.css', 
                 'resources/css/filament/admin/theme.css',
+                'resources/css/filament-grapesjs-editor.css',
                 'resources/js/app.js',
+                'resources/js/grapesjs-editor.js',
             ],
             refresh: true,
         }),

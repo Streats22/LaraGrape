@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Page;
+use App\Services\GrapesJsConverterService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\Response;
@@ -10,6 +11,13 @@ use Illuminate\Http\JsonResponse;
 
 class PageController extends Controller
 {
+    protected GrapesJsConverterService $converterService;
+    
+    public function __construct(GrapesJsConverterService $converterService)
+    {
+        $this->converterService = $converterService;
+    }
+
     /**
      * Display a page by its slug
      */
@@ -22,7 +30,13 @@ class PageController extends Controller
         // Get the rendered HTML and CSS from GrapesJS data
         $renderedHtml = $this->renderGrapesJsContent($page);
         
-        return view('pages.show', compact('page', 'renderedHtml'));
+        // Prepare GrapesJS data for editing (convert back to original format if needed)
+        $editingData = [];
+        if (!empty($page->grapesjs_data)) {
+            $editingData = $this->converterService->processForEditing($page->grapesjs_data);
+        }
+        
+        return view('pages.show', compact('page', 'renderedHtml', 'editingData'));
     }
     
     /**
@@ -41,7 +55,13 @@ class PageController extends Controller
         
         $renderedHtml = $this->renderGrapesJsContent($page);
         
-        return view('pages.show', compact('page', 'renderedHtml'));
+        // Prepare GrapesJS data for editing (convert back to original format if needed)
+        $editingData = [];
+        if (!empty($page->grapesjs_data)) {
+            $editingData = $this->converterService->processForEditing($page->grapesjs_data);
+        }
+        
+        return view('pages.show', compact('page', 'renderedHtml', 'editingData'));
     }
     
     /**
@@ -85,14 +105,17 @@ class PageController extends Controller
                 'saved_by' => auth()->id(),
             ];
             
+            // Process the data for saving (convert to Blade components)
+            $processedData = $this->converterService->processForSaving($grapesjsData);
+            
             \Log::info('Saving GrapesJS data', [
                 'page_id' => $page->id,
-                'grapesjs_data' => $grapesjsData
+                'grapesjs_data' => $processedData
             ]);
             
             // Update the page
             $page->update([
-                'grapesjs_data' => $grapesjsData,
+                'grapesjs_data' => $processedData,
                 'updated_at' => now(),
             ]);
             
@@ -126,21 +149,16 @@ class PageController extends Controller
         if (empty($page->grapesjs_data)) {
             return $page->content ?? '';
         }
-        
         $data = $page->grapesjs_data;
-        
         if (is_string($data)) {
             $data = json_decode($data, true);
         }
-        
-        $html = $data['html'] ?? '';
-        $css = $data['css'] ?? '';
-        
-        // Wrap the content with CSS
+        // Prefer original GrapesJS HTML/CSS if available
+        $html = $data['original_grapesjs']['html'] ?? ($data['html'] ?? '');
+        $css = $data['original_grapesjs']['css'] ?? ($data['css'] ?? '');
         if (!empty($css)) {
             $html = "<style>{$css}</style>" . $html;
         }
-        
         return $html;
     }
     

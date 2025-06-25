@@ -30,8 +30,8 @@ class Page extends Model
 
     protected $casts = [
         'grapesjs_data' => 'array',
-        'grapesjs_css' => 'array', 
-        'grapesjs_html' => 'array',
+        'grapesjs_css' => 'string', 
+        'grapesjs_html' => 'string',
         'is_published' => 'boolean',
         'show_in_menu' => 'boolean',
         'published_at' => 'datetime',
@@ -71,6 +71,7 @@ class Page extends Model
 
     public function getRouteKeyName()
     {
-        return 'slug';
+        // Use 'id' for admin routes, 'slug' for public routes
+        return request()->is('admin/*') ? 'id' : 'slug';
     }
 }

@@ -35,13 +35,12 @@
     <!-- GrapesJS CSS for frontend editor -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/grapesjs@0.22.8/dist/css/grapes.min.css">
     
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
     <!-- Vite Assets -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <!-- GrapesJS CSS last -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/grapesjs@0.22.8/dist/css/grapes.min.css">
+    @vite([
+        'resources/css/app.css', 
+        'resources/js/app.js'
+    ])
+    
     <style>
         /* Only set min-height for the editor wrapper */
         .grapejs-editor-wrapper {
@@ -73,22 +72,42 @@
 
     @include('components.layout.footer')
 
+    @php
+        $appCss = Vite::asset('resources/css/app.css');
+    @endphp
+    <script>
+        window.grapesjsCanvasStyles = [@json($appCss)];
+    </script>
     @if(auth()->check())
         @php
-            // Load blocks dynamically from BlockService
             $blockService = app(\App\Services\BlockService::class);
             $grapesjsBlocks = $blockService->getGrapesJsBlocks();
         @endphp
-        
-        <!-- Load GrapesJS CSS/JS -->
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/grapesjs@0.22.8/dist/css/grapes.min.css">
         <script src="https://unpkg.com/grapesjs@0.22.8/dist/grapes.min.js"></script>
-        
-        <!-- Pass data to JavaScript -->
+        <script type="module" src="{{ Vite::asset('resources/js/grapesjs-editor.js') }}"></script>
         <script>
             window.grapesjsBlocks = @json($grapesjsBlocks);
-            window.pageGrapesjsData = @json($page->grapesjs_data ?? []);
+            window.pageGrapesjsData = @json($editingData ?? []);
             window.saveGrapesjsUrl = "{{ route('page.save-grapesjs', ['slug' => $page->slug]) }}";
+            function initializeFrontendEditor() {
+                if (typeof grapesjs !== 'undefined' && typeof window.LaraGrapeGrapesJsEditor !== 'undefined') {
+                    window.frontendGrapesJsEditor = new window.LaraGrapeGrapesJsEditor({
+                        containerId: 'grapejs-frontend-editor',
+                        mode: 'frontend',
+                        saveUrl: window.saveGrapesjsUrl,
+                        blocks: window.grapesjsBlocks,
+                        initialData: window.pageGrapesjsData
+                    });
+                } else {
+                    setTimeout(initializeFrontendEditor, 200);
+                }
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initializeFrontendEditor);
+            } else {
+                initializeFrontendEditor();
+            }
         </script>
     @endif
 </body>

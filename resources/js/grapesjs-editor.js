@@ -1,196 +1,387 @@
-import grapesjs from 'grapesjs';
+/**
+ * LaraGrape Unified GrapesJS Editor
+ * Works for both frontend and backend (Filament) contexts
+ */
 
-export default function grapesJsEditor({
-    state,
-    isDisabled,
-    height = '600px'
-}) {
-    return {
-        state,
-        editor: null,
+class LaraGrapeGrapesJsEditor {
+    constructor(options = {}) {
+        this.options = {
+            containerId: 'grapejs-editor',
+            mode: 'frontend', // 'frontend' or 'backend'
+            saveUrl: '',
+            blocks: [],
+            initialData: {},
+            statePath: '', // for Filament
+            isDisabled: false,
+            height: '100vh',
+            onSave: null, // custom save handler
+            ...options
+        };
+        this.editor = null;
+        this.wrapper = null;
+        this.fullscreenBtn = null;
+        this.init();
+    }
+
+    init() {
+        this.wrapper = document.getElementById(`wrapper-${this.options.containerId}`) || document.querySelector('.grapejs-editor-wrapper');
+        this.fullscreenBtn = this.wrapper?.querySelector('.fullscreen-toggle-btn');
+        if (typeof grapesjs === 'undefined') {
+            console.error('GrapesJS is not loaded');
+            return;
+        }
+        this.initializeEditor();
+        this.setupEventListeners();
+    }
+
+    initializeEditor() {
+        const editorElement = document.getElementById(this.options.containerId);
+        if (!editorElement) {
+            console.error(`Editor element with ID ${this.options.containerId} not found`);
+            return;
+        }
+        this.editor = grapesjs.init({
+            container: editorElement,
+            height: this.options.height,
+            width: '100%',
+            fromElement: false,
+            showOffsets: true,
+            noticeOnUnload: false,
+            storageManager: false,
+            canvas: {
+                styles: window.grapesjsCanvasStyles || [],
+                scripts: [],
+            },
+            blockManager: {
+                blocks: this.options.blocks
+            }
+        });
+        this.loadExistingContent();
+        this.setupChangeListeners();
+        if (this.options.isDisabled) {
+            this.editor.Commands.run('core:canvas-clear');
+        }
+        setTimeout(() => {
+            this.editor.refresh();
+        }, 100);
+    }
+
+    loadExistingContent() {
+        const data = this.options.initialData;
+        if (data && data.html) {
+            this.editor.setComponents(data.html);
+        }
+        if (data && data.css) {
+            this.editor.setStyle(data.css);
+        }
+    }
+
+    setupChangeListeners() {
+        const updateState = () => {
+            if (this.options.mode === 'backend') {
+                this.updateFilamentFormState();
+            }
+        };
+        // Robust: listen to all relevant events
+        this.editor.on('component:add', updateState);
+        this.editor.on('component:remove', updateState);
+        this.editor.on('component:update', updateState);
+        this.editor.on('change:changedComponent', updateState);
+        this.editor.on('change:changedStyle', updateState);
+        this.editor.on('component:selected', updateState);
+        this.editor.on('component:deselected', updateState);
+        this.editor.on('style:change', updateState);
+        this.editor.on('canvas:drop', updateState);
+        this.editor.on('canvas:dragend', updateState);
+        this.editor.on('change', updateState);
+    }
+
+    updateFilamentFormState() {
+        if (!this.editor) return;
         
-        init() {
-            this.initEditor();
-        },
+        const html = this.editor.getHtml();
+        const css = this.editor.getCss();
+        const data = {
+            html: html,
+            css: css,
+            data: this.editor.getProjectData(),
+            last_updated: new Date().toISOString()
+        };
         
-        initEditor() {
-            // Initialize GrapesJS
-            this.editor = grapesjs.init({
-                container: this.$refs.editor,
-                height: height,
-                width: 'auto',
-                fromElement: false,
-                showOffsets: true,
-                noticeOnUnload: false,
-                storageManager: false,
-                
-                // Canvas settings
-                canvas: {
-                    styles: [
-                        'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css'
-                    ]
-                },
-                
-                // Block Manager
-                blockManager: {
-                    appendTo: '.blocks-container',
-                    blocks: [
-                        {
-                            id: 'section',
-                            label: 'Section',
-                            attributes: { class: 'gjs-block-section' },
-                            content: '<section class="py-16 bg-gray-50"><div class="container mx-auto px-4"><h2 class="text-3xl font-bold text-center mb-8">Section Title</h2><p class="text-lg text-center text-gray-600">Add your content here</p></div></section>'
-                        },
-                        {
-                            id: 'text',
-                            label: 'Text',
-                            content: '<div class="text-component">Insert your text here</div>',
-                        },
-                        {
-                            id: 'image',
-                            label: 'Image',
-                            select: true,
-                            content: { type: 'image' },
-                            activate: true,
-                        },
-                        {
-                            id: 'button',
-                            label: 'Button',
-                            content: '<button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Click me</button>',
-                        },
-                        {
-                            id: 'hero',
-                            label: 'Hero Section',
-                            content: '<section class="hero bg-gradient-to-r from-blue-500 to-purple-600 text-white py-20"><div class="container mx-auto px-4 text-center"><h1 class="text-5xl font-bold mb-4">Welcome to LaralGrape</h1><p class="text-xl mb-8">Build amazing websites with our visual editor</p><button class="bg-white text-blue-600 font-bold py-3 px-6 rounded-lg hover:bg-gray-100 transition duration-300">Get Started</button></div></section>'
-                        },
-                        {
-                            id: 'columns',
-                            label: '2 Columns',
-                            content: '<div class="grid grid-cols-1 md:grid-cols-2 gap-8 p-8"><div class="bg-white p-6 rounded-lg shadow-lg"><h3 class="text-xl font-bold mb-4">Column 1</h3><p class="text-gray-600">Add your content here</p></div><div class="bg-white p-6 rounded-lg shadow-lg"><h3 class="text-xl font-bold mb-4">Column 2</h3><p class="text-gray-600">Add your content here</p></div></div>'
-                        },
-                        {
-                            id: 'card',
-                            label: 'Card',
-                            content: '<div class="max-w-sm mx-auto bg-white rounded-xl shadow-md overflow-hidden"><img class="w-full h-48 object-cover" src="https://via.placeholder.com/400x200" alt="Card image"><div class="p-6"><h3 class="text-xl font-bold mb-2">Card Title</h3><p class="text-gray-600 mb-4">Card description goes here</p><button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Learn More</button></div></div>'
-                        }
-                    ]
-                },
-                
-                // Style Manager
-                styleManager: {
-                    appendTo: '.styles-container',
-                    sectors: [{
-                        name: 'Dimension',
-                        open: false,
-                        buildProps: ['width', 'min-height', 'padding'],
-                        properties: [{
-                            type: 'integer',
-                            name: 'The width',
-                            property: 'width',
-                            units: ['px', '%'],
-                            defaults: 'auto',
-                            min: 0,
-                        }]
-                    }, {
-                        name: 'Extra',
-                        open: false,
-                        buildProps: ['background-color', 'box-shadow', 'custom-prop'],
-                        properties: [{
-                            id: 'custom-prop',
-                            name: 'Custom Label',
-                            property: 'font-size',
-                            type: 'select',
-                            defaults: '32px',
-                            options: [
-                                { value: '12px', name: 'Tiny' },
-                                { value: '18px', name: 'Medium' },
-                                { value: '32px', name: 'Big' },
-                            ],
-                        }]
-                    }]
-                },
-                
-                // Device Manager
-                deviceManager: {
-                    devices: [
-                        {
-                            name: 'Desktop',
-                            width: '',
-                        },
-                        {
-                            name: 'Tablet',
-                            width: '768px',
-                            widthMedia: '992px',
-                        },
-                        {
-                            name: 'Mobile',
-                            width: '320px',
-                            widthMedia: '768px',
-                        },
-                    ]
-                }
-            });
-            
-            // Load existing content if available
-            if (this.state) {
-                try {
-                    const data = typeof this.state === 'string' ? JSON.parse(this.state) : this.state;
-                    if (data.html) {
-                        this.editor.setComponents(data.html);
-                    }
-                    if (data.css) {
-                        this.editor.setStyle(data.css);
-                    }
-                } catch (e) {
-                    console.error('Error loading GrapesJS data:', e);
-                }
+        const form = this.wrapper.closest('form');
+        if (form) {
+            let hiddenInput = form.querySelector(`input[name="${this.options.statePath}"]`);
+            if (!hiddenInput) {
+                hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = this.options.statePath;
+                form.appendChild(hiddenInput);
             }
             
-            // Listen for changes and update state
-            this.editor.on('change:changedComponent change:changedStyle', () => {
-                this.updateState();
-            });
+            // Update the hidden input value
+            hiddenInput.value = JSON.stringify(data);
             
-            // Disable editor if needed
-            if (isDisabled) {
-                this.editor.Commands.run('core:canvas-clear');
+            // Trigger events to notify Filament
+            hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
+            hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+            
+            // Also trigger Filament-specific events
+            const fieldWrapper = this.wrapper.closest('[data-field-wrapper]');
+            if (fieldWrapper) {
+                fieldWrapper.dispatchEvent(new CustomEvent('filament:field-changed', {
+                    detail: { value: data },
+                    bubbles: true
+                }));
             }
             
-            // After initializing the editor (this.editor = grapesjs.init({...}))
-            this.editor.Panels.addButton('options', [{
-                id: 'save-db',
-                className: 'fa fa-save',
-                label: 'Save',
-                command: () => {
-                    const html = this.editor.getHtml();
-                    const css = this.editor.getCss();
-                    // If using Alpine:
-                    this.state = JSON.stringify({ html, css });
-                    // If using Livewire, you may need to call $wire.set('grapesjs_data', ...)
-                    alert('Content ready to be saved! Now click the Filament Save button.');
-                }
-            }]);
-        },
-        
-        updateState() {
-            if (!this.editor) return;
-            
+            // Trigger form change event
+            form.dispatchEvent(new CustomEvent('filament:form-changed', {
+                detail: { field: this.options.statePath, value: data },
+                bubbles: true
+            }));
+        }
+    }
+
+    // Method to sync content before form submission
+    syncToFormBeforeSubmit() {
+        if (this.options.mode === 'backend' && this.editor) {
+            console.log('Syncing GrapesJS content to form before submit...');
+            this.updateFilamentFormState();
+        }
+    }
+
+    async saveContent() {
+        if (this.options.mode === 'backend') {
+            // Backend: Make AJAX request to save endpoint
             const html = this.editor.getHtml();
             const css = this.editor.getCss();
-            const data = this.editor.getProjectData();
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
             
-            this.state = JSON.stringify({
-                html: html,
-                css: css,
-                data: data
-            });
-        },
-        
-        destroy() {
-            if (this.editor) {
-                this.editor.destroy();
-                this.editor = null;
+            if (!csrfToken) {
+                alert('CSRF token not found. Please refresh the page and try again.');
+                return;
+            }
+            
+            // Get the save URL from the editor element data
+            const editorElement = document.getElementById(this.options.containerId);
+            let saveUrl = editorElement?.dataset.saveUrl;
+            
+            // If no save URL is provided, try to construct it from the current page
+            if (!saveUrl) {
+                const pageId = editorElement?.dataset.pageId;
+                if (pageId) {
+                    saveUrl = `/admin/pages/${pageId}/save-grapesjs`;
+                } else {
+                    // Try to extract page ID from the current URL
+                    const currentUrl = window.location.pathname;
+                    const match = currentUrl.match(/\/admin\/pages\/(\d+)\/edit/);
+                    if (match) {
+                        const extractedPageId = match[1];
+                        saveUrl = `/admin/pages/${extractedPageId}/save-grapesjs`;
+                    }
+                }
+            }
+            
+            if (!saveUrl) {
+                alert('Save URL not found. Please refresh the page and try again.');
+                return;
+            }
+            
+            try {
+                const response = await fetch(saveUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ html, css }),
+                    credentials: 'same-origin'
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    this.showSaveStatus('success', result.message || 'Page builder content saved!');
+                    // Also update the form state to keep it in sync
+                    this.updateFilamentFormState();
+                } else {
+                    this.showSaveStatus('error', 'Save failed: ' + (result.message || result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                this.showSaveStatus('error', 'Save error: ' + error.message);
+            }
+        } else {
+            // Frontend: POST to saveUrl
+            const html = this.editor.getHtml();
+            const css = this.editor.getCss();
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            if (!csrfToken) {
+                alert('CSRF token not found. Please refresh the page and try again.');
+                return;
+            }
+            try {
+                const response = await fetch(this.options.saveUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ html, css }),
+                    credentials: 'same-origin'
+                });
+                const result = await response.json();
+                if (!(response.ok && result.success)) {
+                    alert('Save failed: ' + (result.message || result.error));
+                }
+            } catch (error) {
+                alert('Save error: ' + error.message);
             }
         }
     }
+
+    setupEventListeners() {
+        // Fullscreen toggle
+        if (this.fullscreenBtn) {
+            this.fullscreenBtn.addEventListener('click', () => {
+                this.toggleFullscreen();
+            });
+        }
+        
+        // Save button (backend)
+        if (this.options.mode === 'backend' && this.wrapper) {
+            const saveBtn = this.wrapper.querySelector('.grapesjs-save-btn');
+            
+            if (saveBtn) {
+                const editorElement = document.getElementById(this.options.containerId);
+                const saveUrl = editorElement?.dataset.saveUrl;
+                
+                // Always enable the save button in backend mode
+                saveBtn.disabled = false;
+                saveBtn.style.opacity = '1';
+                saveBtn.style.cursor = 'pointer';
+                saveBtn.title = 'Save page builder content';
+                
+                saveBtn.addEventListener('click', () => {
+                    this.saveContent();
+                });
+            }
+            
+            // Listen for Filament form submission to sync content
+            const form = this.wrapper.closest('form');
+            if (form) {
+                // Listen for form submit events
+                form.addEventListener('submit', (e) => {
+                    this.syncToFormBeforeSubmit();
+                });
+                
+                // Listen for Filament-specific events
+                form.addEventListener('filament:submit', (e) => {
+                    this.syncToFormBeforeSubmit();
+                });
+                
+                // Also listen for button clicks that might submit the form
+                document.addEventListener('click', (e) => {
+                    const target = e.target;
+                    if (target && (target.type === 'submit' || target.classList.contains('fi-btn--primary'))) {
+                        // Check if this button is in the same form
+                        const buttonForm = target.closest('form');
+                        if (buttonForm === form) {
+                            setTimeout(() => {
+                                this.syncToFormBeforeSubmit();
+                            }, 10);
+                        }
+                    }
+                });
+            }
+        }
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.exitFullscreen();
+            }
+        });
+    }
+
+    toggleFullscreen() {
+        if (!this.wrapper) return;
+        const fullscreenIcon = this.fullscreenBtn?.querySelector('.fullscreen-icon');
+        const exitIcon = this.fullscreenBtn?.querySelector('.exit-fullscreen-icon');
+        const editorDiv = this.wrapper.querySelector('.grapesjs-editor');
+        if (this.wrapper.classList.contains('fullscreen')) {
+            this.exitFullscreen();
+        } else {
+            this.enterFullscreen();
+        }
+    }
+    enterFullscreen() {
+        if (!this.wrapper) return;
+        const fullscreenIcon = this.fullscreenBtn?.querySelector('.fullscreen-icon');
+        const exitIcon = this.fullscreenBtn?.querySelector('.exit-fullscreen-icon');
+        const editorDiv = this.wrapper.querySelector('.grapesjs-editor');
+        this.wrapper.classList.add('fullscreen');
+        if (fullscreenIcon) fullscreenIcon.style.display = 'none';
+        if (exitIcon) exitIcon.style.display = 'block';
+        if (this.fullscreenBtn) this.fullscreenBtn.title = 'Exit Fullscreen';
+        if (editorDiv) editorDiv.style.height = 'calc(100vh - 120px)';
+        document.body.style.overflow = 'hidden';
+    }
+    exitFullscreen() {
+        if (!this.wrapper) return;
+        const fullscreenIcon = this.fullscreenBtn?.querySelector('.fullscreen-icon');
+        const exitIcon = this.fullscreenBtn?.querySelector('.exit-fullscreen-icon');
+        const editorDiv = this.wrapper.querySelector('.grapesjs-editor');
+        this.wrapper.classList.remove('fullscreen');
+        if (fullscreenIcon) fullscreenIcon.style.display = 'block';
+        if (exitIcon) exitIcon.style.display = 'none';
+        if (this.fullscreenBtn) this.fullscreenBtn.title = 'Toggle Fullscreen Mode (Press Escape to exit)';
+        if (editorDiv) editorDiv.style.height = editorDiv.dataset.height || '600px';
+        document.body.style.overflow = '';
+    }
+    destroy() {
+        if (this.editor) {
+            this.editor.destroy();
+        }
+    }
+    
+    showSaveStatus(type, message) {
+        console.log('Save status:', type, message);
+        
+        // For backend, show a temporary notification
+        if (this.options.mode === 'backend') {
+            // Create a temporary notification element
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 20px;
+                border-radius: 8px;
+                color: white;
+                font-weight: 600;
+                z-index: 1000000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                transition: all 0.3s ease;
+                ${type === 'success' ? 'background: #10b981;' : 'background: #ef4444;'}
+            `;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 3000);
+        } else {
+            // For frontend, use alert as fallback
+            alert(message);
+        }
+    }
 }
+
+// Export globally
+window.LaraGrapeGrapesJsEditor = LaraGrapeGrapesJsEditor;

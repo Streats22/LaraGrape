@@ -25,7 +25,24 @@ Alpine.data('grapejsEditBar', () => ({
     grapejsEditor: null,
     saveStatus: '', // 'success', 'error', or ''
     
+    init() {
+        console.log('Alpine grapejsEditBar initialized');
+        // Wait for the frontend editor to be initialized
+        this.waitForEditor();
+    },
+    
+    waitForEditor() {
+        if (window.frontendGrapesJsEditor) {
+            this.grapejsEditor = window.frontendGrapesJsEditor;
+            console.log('Frontend GrapesJS editor found:', this.grapejsEditor);
+        } else {
+            console.log('Frontend GrapesJS editor not found yet, retrying...');
+            setTimeout(() => this.waitForEditor(), 100);
+        }
+    },
+    
     startEditing() {
+        console.log('Starting editing...');
         this.isEditing = true;
         this.originalScroll = window.scrollY;
         
@@ -36,13 +53,14 @@ Alpine.data('grapejsEditBar', () => ({
         if (pageContent) pageContent.style.display = 'none';
         if (editorWrapper) editorWrapper.style.display = 'block';
         
-        // Initialize GrapesJS if not already done
-        if (!this.grapejsEditor && typeof grapesjs !== 'undefined') {
-            this.initializeGrapesJS();
+        // Make sure we have the editor instance
+        if (!this.grapejsEditor) {
+            this.waitForEditor();
         }
     },
     
     exitEditing() {
+        console.log('Exiting editing...');
         this.isEditing = false;
         this.saveStatus = '';
         
@@ -58,6 +76,9 @@ Alpine.data('grapejsEditBar', () => ({
     },
     
     async saveContent() {
+        console.log('Alpine saveContent() called');
+        console.log('this.grapejsEditor:', this.grapejsEditor);
+        
         if (!this.grapejsEditor) {
             console.error('GrapesJS editor not initialized');
             this.showSaveStatus('error', 'Editor not initialized');
@@ -65,86 +86,22 @@ Alpine.data('grapejsEditBar', () => ({
         }
         
         this.isSaving = true;
-        this.saveStatus = '';
         
         try {
-            const html = this.grapejsEditor.getHtml();
-            const css = this.grapejsEditor.getCss();
-            
-            console.log('Saving content:', { html, css });
-            console.log('Current URL:', window.location.pathname);
-            
-            // Get fresh CSRF token
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-            if (!csrfToken) {
-                throw new Error('CSRF token not found. Please refresh the page and try again.');
-            }
-            
-            console.log('CSRF Token:', csrfToken);
-            
-            const saveUrl = window.saveGrapesjsUrl;
-            console.log('Save URL:', saveUrl);
-            
-            const response = await fetch(saveUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({ html, css }),
-                credentials: 'same-origin' // Include cookies for authentication
-            });
-            
-            console.log('Response status:', response.status);
-            console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-            
-            if (response.status === 419) {
-                throw new Error('CSRF token expired. Please refresh the page and try again.');
-            }
-            
-            if (response.status === 401) {
-                throw new Error('Authentication required. Please log in to save changes.');
-            }
-            
-            if (response.status === 404) {
-                throw new Error('Page not found.');
-            }
-            
-            const result = await response.json();
-            console.log('Response data:', result);
-            
-            if (response.ok && result.success) {
-                this.showSaveStatus('success', result.message || 'Content saved successfully!');
-                
-                // Update the page content to reflect the saved changes
-                const pageContent = document.querySelector('.page-content');
-                if (pageContent) {
-                    pageContent.innerHTML = html;
-                    if (css) {
-                        // Add CSS to the page
-                        const styleId = 'grapesjs-saved-styles';
-                        let styleElement = document.getElementById(styleId);
-                        if (!styleElement) {
-                            styleElement = document.createElement('style');
-                            styleElement.id = styleId;
-                            document.head.appendChild(styleElement);
-                        }
-                        styleElement.textContent = css;
-                    }
-                }
-            } else {
-                throw new Error(result.error || result.message || 'Save failed');
-            }
+            console.log('Calling grapejsEditor.saveContent()...');
+            await this.grapejsEditor.saveContent();
+            console.log('saveContent() completed');
+            this.showSaveStatus('success', 'Page saved successfully!');
         } catch (error) {
-            console.error('Save error:', error);
-            this.showSaveStatus('error', error.message || 'Failed to save content');
+            console.error('Error in saveContent:', error);
+            this.showSaveStatus('error', 'Save failed: ' + error.message);
         } finally {
             this.isSaving = false;
         }
     },
     
     showSaveStatus(type, message) {
+        console.log('Showing save status:', type, message);
         this.saveStatus = type;
         
         // Show status message
@@ -159,111 +116,6 @@ Alpine.data('grapejsEditBar', () => ({
                 this.saveStatus = '';
             }, 3000);
         }
-    },
-    
-    initializeGrapesJS() {
-        // Ensure the container is visible and has a min-height before initializing
-        const wrapper = document.querySelector('.grapejs-editor-wrapper');
-        if (wrapper) wrapper.style.display = 'block';
-        const container = document.getElementById('grapejs-frontend-editor');
-        if (container) container.style.minHeight = '700px';
-        
-        this.grapejsEditor = grapesjs.init({
-            container: '#grapejs-frontend-editor',
-            width: '100%',
-            height: '700px',
-            fromElement: false,
-            storageManager: false,
-            plugins: [],
-            canvas: {
-                styles: [
-                    'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css',
-                    '/css/app.css',
-                    '/build/assets/app.css',
-                    '/css/site.css',
-                ],
-                scripts: [],
-            },
-            // Style manager configuration
-            styleManager: {
-                sectors: [
-                    {
-                        name: 'General',
-                        open: false,
-                        buildProps: ['float', 'display', 'position', 'top', 'right', 'left', 'bottom']
-                    },
-                    {
-                        name: 'Dimension',
-                        open: false,
-                        buildProps: ['width', 'height', 'max-width', 'min-height', 'margin', 'padding']
-                    },
-                    {
-                        name: 'Typography',
-                        open: false,
-                        buildProps: ['font-family', 'font-size', 'font-weight', 'letter-spacing', 'color', 'line-height', 'text-align', 'text-decoration', 'text-shadow']
-                    },
-                    {
-                        name: 'Decorations',
-                        open: false,
-                        buildProps: ['border-radius', 'border', 'box-shadow', 'background']
-                    },
-                    {
-                        name: 'Extra',
-                        open: false,
-                        buildProps: ['opacity', 'transition', 'transform']
-                    }
-                ]
-            },
-        });
-        
-        console.log('GrapesJS initialized successfully');
-        
-        // Load content
-        const pageData = window.pageGrapesjsData;
-        if (pageData && pageData.html) {
-            this.grapejsEditor.setComponents(pageData.html);
-        }
-        if (pageData && pageData.css) {
-            this.grapejsEditor.setStyle(pageData.css);
-        }
-        
-        // Add blocks after initialization
-        const blocks = window.grapesjsBlocks || [];
-        console.log('Blocks from PHP:', blocks);
-        if (blocks.length === 0) {
-            console.warn('No blocks found to register with GrapesJS.');
-        }
-        blocks.forEach(block => {
-            if (!block.id || !block.label || !block.content) {
-                console.error('Block missing required property:', block);
-                return;
-            }
-            if (!block.media && block.icon) {
-                block.media = `<i class="${block.icon}"></i>`;
-            }
-            if (block.content && typeof block.content === 'string') {
-                block.content = block.content.replace(
-                    /https?:\/\/via\.placeholder\.com\/800x400/g,
-                    '/images/placeholder.png'
-                );
-            }
-            try {
-                this.grapejsEditor.BlockManager.add(block.id, block);
-                console.log('Registered block:', block.id, block.label);
-            } catch (e) {
-                console.error('Error registering block:', block, e);
-            }
-        });
-        // Try to open the block manager panel after a short delay
-        setTimeout(() => {
-            if (this.grapejsEditor && this.grapejsEditor.Panels && this.grapejsEditor.Panels.getButton) {
-                const openBlocksBtn = this.grapejsEditor.Panels.getButton('views', 'open-blocks');
-                if (openBlocksBtn) openBlocksBtn.set('active', true);
-                else console.warn('Block manager button not found.');
-            } else {
-                console.warn('Block manager panel/button not available yet.');
-            }
-        }, 500);
     }
 }));
 

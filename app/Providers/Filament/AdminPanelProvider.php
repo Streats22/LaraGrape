@@ -26,6 +26,7 @@ class AdminPanelProvider extends PanelProvider
     public function boot(): void
     {
         FilamentAsset::register([
+            // GrapesJS core assets
             Css::make('grapesjs-css', 'https://unpkg.com/grapesjs@0.22.8/dist/css/grapes.min.css'),
             Js::make('grapesjs', 'https://unpkg.com/grapesjs@0.22.8/dist/grapes.min.js'),
         ]);
