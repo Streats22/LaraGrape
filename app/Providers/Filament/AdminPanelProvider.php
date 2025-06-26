@@ -68,7 +68,7 @@ class AdminPanelProvider extends PanelProvider
                 ],
             ])
             ->font('Inter')
-            ->brandName('LaraGrape')
+            ->brandName('LaralGrape')
             ->brandLogo(asset('images/logo.svg'))
             ->favicon(asset('images/favicon.svg'))
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')

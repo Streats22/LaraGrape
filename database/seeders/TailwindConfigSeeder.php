@@ -17,7 +17,7 @@ class TailwindConfigSeeder extends Seeder
         TailwindConfig::firstOrCreate(
             ['name' => 'Default Purple Theme'],
             [
-                'description' => 'Default purple theme for LaraGrape with grape-inspired colors',
+                'description' => 'Default purple theme for LaralGrape with grape-inspired colors',
                 'is_active' => true,
                 'primary_50' => '#faf5ff',
                 'primary_100' => '#f3e8ff',
@@ -54,7 +54,7 @@ class TailwindConfigSeeder extends Seeder
                 'custom_css' => null,
                 'enable_dark_mode' => false,
                 'enable_animations' => true,
-                'css_variables_prefix' => '--laragrape',
+                'css_variables_prefix' => '--laralgrape',
                 'purge_css' => true,
                 'minify_css' => true,
             ]
@@ -101,7 +101,7 @@ class TailwindConfigSeeder extends Seeder
                 'custom_css' => null,
                 'enable_dark_mode' => false,
                 'enable_animations' => true,
-                'css_variables_prefix' => '--laragrape',
+                'css_variables_prefix' => '--laralgrape',
                 'purge_css' => true,
                 'minify_css' => true,
             ]

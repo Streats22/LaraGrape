@@ -5,12 +5,6 @@ namespace App\Services;
 use App\Models\SiteSettings;
 use Illuminate\Support\Facades\Cache;
 
-/**
- * Service for retrieving and managing site settings.
- *
- * This service provides easy access to all site-wide settings such as logo text, colors, SEO, and more.
- * It fetches settings from the database and provides sensible defaults if not set.
- */
 class SiteSettingsService
 {
     protected array $settings = [];
@@ -49,8 +43,7 @@ class SiteSettingsService
      */
     public function get(string $key, $default = null)
     {
-        $setting = SiteSettings::where('key', $key)->first();
-        return $setting ? $setting->value : $default;
+        return $this->settings[$key] ?? $default;
     }
 
     /**
@@ -62,38 +55,32 @@ class SiteSettingsService
     }
 
     /**
-     * Get header settings (logo, colors, etc)
-     *
-     * @return array
+     * Get header settings
      */
     public function getHeaderSettings(): array
     {
-        // Returns header logo, image, colors, and other header-related settings
         return [
-            'logo_text' => $this->get('header_logo_text', 'My Website'),
+            'logo_text' => $this->get('header_logo_text', 'LaralGrape'),
             'logo_image' => $this->get('header_logo_image'),
             'background_color' => $this->get('header_background_color', '#ffffff'),
             'text_color' => $this->get('header_text_color', '#1f2937'),
             'sticky' => $this->get('header_sticky', true),
-            'show_search' => $this->get('header_show_search', true),
+            'show_search' => $this->get('header_show_search', false),
             'custom_css' => $this->get('header_custom_css', ''),
         ];
     }
 
     /**
-     * Get footer settings (logo, content, etc)
-     *
-     * @return array
+     * Get footer settings
      */
     public function getFooterSettings(): array
     {
-        // Returns footer logo, image, colors, and other footer-related settings
         return [
-            'logo_text' => $this->get('footer_logo_text', 'My Website'),
+            'logo_text' => $this->get('footer_logo_text', 'LaralGrape'),
             'logo_image' => $this->get('footer_logo_image'),
             'background_color' => $this->get('footer_background_color', '#1f2937'),
             'text_color' => $this->get('footer_text_color', '#ffffff'),
-            'content' => $this->get('footer_content', '© 2024 My Website. All rights reserved.'),
+            'content' => $this->get('footer_content', '© 2024 LaralGrape. All rights reserved.'),
             'show_social' => $this->get('footer_show_social', true),
             'show_newsletter' => $this->get('footer_show_newsletter', false),
             'custom_css' => $this->get('footer_custom_css', ''),
@@ -116,37 +103,30 @@ class SiteSettingsService
     }
 
     /**
-     * Get SEO settings (title, description, etc)
-     *
-     * @return array
+     * Get SEO settings
      */
     public function getSeoSettings(): array
     {
-        // Returns SEO-related settings with sensible defaults
         return [
-            'title' => $this->get('seo_title', 'My Website - Web Development'),
-            'description' => $this->get('seo_description', 'A powerful web development boilerplate combining Laravel, GrapesJS, and Filament for building modern websites.'),
+            'title' => $this->get('seo_title', 'LaralGrape - Web Development Boilerplate'),
             'keywords' => $this->get('seo_keywords', 'laravel, grapesjs, filament, web development'),
-            'author' => $this->get('seo_author', 'My Website'),
-            'robots' => $this->get('seo_robots', 'index, follow'),
-            'og_type' => $this->get('seo_og_type', 'website'),
-            'twitter_card' => $this->get('seo_twitter_card', 'summary_large_image'),
+            'description' => $this->get('seo_description', 'A powerful web development boilerplate combining Laravel, GrapesJS, and Filament for building modern websites.'),
+            'auto_generate' => $this->get('seo_auto_generate', true),
+            'show_author' => $this->get('seo_show_author', false),
+            'google_analytics_id' => $this->get('google_analytics_id'),
         ];
     }
 
     /**
-     * Get general site settings (site name, tagline, etc)
-     *
-     * @return array
+     * Get general site settings
      */
     public function getGeneralSettings(): array
     {
-        // Returns general site settings
         return [
-            'site_name' => $this->get('site_name', 'My Website'),
-            'site_tagline' => $this->get('site_tagline', 'Visual Page Builder'),
-            'site_description' => $this->get('site_description', 'A powerful visual page builder built with Laravel, GrapesJS, and Filament.'),
-            'contact_email' => $this->get('contact_email', 'hello@example.com'),
+            'site_name' => $this->get('site_name', 'LaralGrape'),
+            'site_tagline' => $this->get('site_tagline', 'Laravel + GrapesJS + Filament'),
+            'site_description' => $this->get('site_description', 'A powerful web development boilerplate combining Laravel, GrapesJS, and Filament for building modern websites.'),
+            'contact_email' => $this->get('contact_email', 'contact@example.com'),
             'contact_phone' => $this->get('contact_phone', '+1 (555) 123-4567'),
             'address' => $this->get('address', '123 Main Street, City, State 12345'),
             'timezone' => $this->get('timezone', 'UTC'),
@@ -243,23 +223,5 @@ class SiteSettingsService
         Cache::forget('site_settings_all');
         $this->loaded = false;
         $this->loadSettings();
-    }
-
-    /**
-     * Get global site branding (logo image and text).
-     *
-     * Returns an array with 'logo_image' and 'logo_text'.
-     * If no image is set, falls back to text. If no text, uses 'My Website'.
-     *
-     * @return array
-     */
-    public function getBranding(): array
-    {
-        $logoImage = $this->get('branding_logo_image') ?: $this->get('header_logo_image');
-        $logoText = $this->get('branding_logo_text') ?: $this->get('header_logo_text') ?: $this->get('site_name') ?: 'My Website';
-        return [
-            'logo_image' => $logoImage,
-            'logo_text' => $logoText,
-        ];
     }
 } 

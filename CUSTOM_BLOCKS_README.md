@@ -1,6 +1,6 @@
 # 🧱 Custom Block Builder & Site Settings
 
-LaraGrape now includes a powerful custom block builder and comprehensive site settings management system.
+LaralGrape now includes a powerful custom block builder and comprehensive site settings management system.
 
 ## 🎯 **Custom Block Builder**
 
@@ -335,4 +335,4 @@ $icons = CustomBlock::getIcons();
 
 ---
 
-**The custom block builder and site settings system make LaraGrape incredibly flexible and powerful! 🚀** 
+**The custom block builder and site settings system make LaralGrape incredibly flexible and powerful! 🚀** 

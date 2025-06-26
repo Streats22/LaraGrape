@@ -110,4 +110,108 @@
             });
         </script>
     @endpush
+    
+    <style>
+        .grapesjs-editor-wrapper {
+            width: 100%;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .grapesjs-editor-wrapper.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 99999 !important;
+            background: white;
+            box-sizing: border-box;
+            isolation: isolate;
+        }
+        
+        .grapesjs-controls {
+            position: absolute;
+            top: 80px;
+            left: 15px;
+            z-index: 100000 !important;
+            display: flex;
+            gap: 8px;
+        }
+        
+        .fullscreen-toggle-btn {
+            background: rgba(59, 130, 246, 0.9);
+            border: 2px solid #3b82f6;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100001 !important;
+            position: relative;
+            min-width: 44px;
+            min-height: 44px;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        
+        .fullscreen-toggle-btn:hover {
+            background: rgba(59, 130, 246, 1);
+            border-color: #2563eb;
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+            transform: translateY(-1px);
+        }
+        
+        .fullscreen-toggle-btn svg {
+            color: white;
+            width: 20px;
+            height: 20px;
+        }
+        
+        .fullscreen-toggle-btn:hover svg {
+            color: white;
+        }
+        
+        .grapesjs-editor {
+            border-radius: 8px;
+            overflow: hidden;
+            width: 100% !important;
+            min-height: 400px;
+            background: #ffffff;
+            transition: height 0.3s ease;
+        }
+        
+        .grapesjs-editor-wrapper.fullscreen .grapesjs-editor {
+            height: calc(100vh - 120px) !important;
+            border-radius: 0;
+            border: none;
+            z-index: 99999 !important;
+        }
+        
+        @media (max-width: 1024px) {
+            .grapesjs-editor {
+                min-height: 300px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .grapesjs-controls {
+                top: 60px;
+                left: 10px;
+            }
+            
+            .fullscreen-toggle-btn {
+                padding: 10px;
+                min-width: 40px;
+                min-height: 40px;
+            }
+            
+            .fullscreen-toggle-btn svg {
+                width: 18px;
+                height: 18px;
+            }
+        }
+    </style>
 </x-dynamic-component>

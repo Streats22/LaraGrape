@@ -267,9 +267,8 @@ class TailwindConfigResource extends Resource
                                         
                                         TextInput::make('css_variables_prefix')
                                             ->label('CSS Variables Prefix')
-                                            ->helperText('Prefix for CSS custom properties (e.g., --laragrape)')
-                                            ->default('--laragrape')
-                                            ->required(),
+                                            ->default('--laralgrape')
+                                            ->helperText('Prefix for CSS custom properties'),
                                     ]),
                                 
                                 Section::make('Performance')
