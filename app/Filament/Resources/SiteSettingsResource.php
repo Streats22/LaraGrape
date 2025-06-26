@@ -40,6 +40,20 @@ class SiteSettingsResource extends Resource
     {
         return $form
             ->schema([
+                TextInput::make('key')
+                    ->label('Key')
+                    ->visible(fn ($record) => $record->exists)
+                    ->unique(ignoreRecord: true)
+                    ->helperText('A unique key for this setting (e.g. site_name, header_logo_text)')
+                    ->reactive()
+                    ->afterStateUpdated(function ($set, $state, $context) {
+                        // Only auto-generate if creating and key is empty
+                        if ($context === 'create' && empty($state)) {
+                            $set('key', str(
+                                request()->input('label', '')
+                            )->slug('_'));
+                        }
+                    }),
                 Tabs::make('Site Configuration')
                     ->tabs([
                         Tabs\Tab::make('General')
@@ -396,5 +410,19 @@ console.log("Site loaded!");')
             'create' => Pages\CreateSiteSettings::route('/create'),
             'edit' => Pages\EditSiteSettings::route('/{record}/edit'),
         ];
+    }
+
+    public static function mutateFormDataBeforeCreate(array $data): array
+    {
+        // Auto-generate label from key if not set
+        if (empty($data['label']) && !empty($data['key'])) {
+            $data['label'] = self::prettifyKey($data['key']);
+        }
+        return $data;
+    }
+
+    protected static function prettifyKey(string $key): string
+    {
+        return ucwords(str_replace(['_', '-'], ' ', $key));
     }
 }

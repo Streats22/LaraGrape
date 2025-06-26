@@ -14,12 +14,16 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        User::firstOrCreate(
+            ['email' => 'admin@test.nl'],
+            [
+                'name' => 'Test admin',
+                'password' => \Illuminate\Support\Facades\Hash::make('admin01'),
+                'email_verified_at' => now(),
+                'remember_token' => \Illuminate\Support\Str::random(10),
+            ]
+        );
 
         // Create default Tailwind configuration
         TailwindConfig::firstOrCreate(
@@ -62,7 +66,7 @@ class DatabaseSeeder extends Seeder
                 'custom_css' => null,
                 'enable_dark_mode' => false,
                 'enable_animations' => true,
-                'css_variables_prefix' => '--laralgrape',
+                'css_variables_prefix' => '--laragrape',
                 'purge_css' => true,
                 'minify_css' => true,
             ]
