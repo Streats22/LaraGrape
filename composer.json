@@ -7,8 +7,10 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "filament/filament": ">=3.0",
         "illuminate/support": ">=12.0",
-        "filament/filament": ">=3.0"
+        "laravel/laravel": "*",
+        "maatwebsite/excel": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -21,6 +23,7 @@
     },
     "autoload": {
         "psr-4": {
+            "App\\": "app/",
             "Streats22\\LaraGrape\\": "src/"
         }
     },
@@ -56,11 +59,12 @@
         ]
     },
     "extra": {
-        "laravel": {
-            "providers": [
-                "Streats22\\LaraGrape\\Providers\\BoilerplateServiceProvider"
-            ]
-        }
+    "laravel": {
+        "providers": [
+        "App\\Providers\\BoilerplateServiceProvider",
+        "App\\Providers\\Filament\\AdminPanelProvider"
+        ]
+    }
     },
     "config": {
         "optimize-autoloader": true,

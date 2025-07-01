@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Streats22\LaraGrape\Models\SiteSettings;
+use App\Models\SiteSettings;
 
 class SiteSettingsSeeder extends Seeder
 {

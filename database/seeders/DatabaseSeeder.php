@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use Streats22\LaraGrape\Models\User;
+use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Streats22\LaraGrape\Models\TailwindConfig;
+use App\Models\TailwindConfig;
 
 class DatabaseSeeder extends Seeder
 {
