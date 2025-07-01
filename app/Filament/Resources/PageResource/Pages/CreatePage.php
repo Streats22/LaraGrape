@@ -43,4 +43,11 @@ class CreatePage extends CreateRecord
         
         return $data;
     }
+
+    protected function getRedirectUrl(): string
+    {
+        // Redirect to the edit page using the id
+        $record = $this->getRecord();
+        return static::getResource()::getUrl('edit', ['record' => $record->getKey()]);
+    }
 }

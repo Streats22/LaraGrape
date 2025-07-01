@@ -164,4 +164,11 @@
       0 => 'RyanChandler\\BladeCaptureDirective\\BladeCaptureDirectiveServiceProvider',
     ),
   ),
+  'wiebenieuwenhuis/filament-code-editor' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Wiebenieuwenhuis\\FilamentCodeEditor\\FilamentCodeEditorServiceProvider',
+    ),
+  ),
 );
