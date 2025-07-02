@@ -14,7 +14,7 @@ class TailwindConfigSeeder extends Seeder
     public function run(): void
     {
         // Create default Tailwind configuration
-        TailwindConfig::firstOrCreate(
+        $default = TailwindConfig::firstOrCreate(
             ['name' => 'Default Purple Theme'],
             [
                 'description' => 'Default purple theme for LaralGrape with grape-inspired colors',
@@ -59,9 +59,14 @@ class TailwindConfigSeeder extends Seeder
                 'minify_css' => true,
             ]
         );
+        if (!$default->wasRecentlyCreated) {
+            $this->command->info('Tailwind config "Default Purple Theme" already exists, skipping.');
+        } else {
+            $this->command->info('Tailwind config "Default Purple Theme" created.');
+        }
 
         // Create alternative theme
-        TailwindConfig::firstOrCreate(
+        $ocean = TailwindConfig::firstOrCreate(
             ['name' => 'Ocean Blue Theme'],
             [
                 'description' => 'Ocean blue theme with calming blue tones',
@@ -106,5 +111,10 @@ class TailwindConfigSeeder extends Seeder
                 'minify_css' => true,
             ]
         );
+        if (!$ocean->wasRecentlyCreated) {
+            $this->command->info('Tailwind config "Ocean Blue Theme" already exists, skipping.');
+        } else {
+            $this->command->info('Tailwind config "Ocean Blue Theme" created.');
+        }
     }
 }

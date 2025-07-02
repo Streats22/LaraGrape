@@ -25,3 +25,4 @@ Thumbs.db
 /storage/
 /storage/**
 !storage/.gitignore
+database/database.sqlite

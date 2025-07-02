@@ -64,10 +64,15 @@ class SiteSettingsSeeder extends Seeder
         ];
 
         foreach ($settings as $setting) {
-            SiteSettings::firstOrCreate(
+            $siteSetting = SiteSettings::firstOrCreate(
                 ['key' => $setting['key']],
                 $setting
             );
+            if (!$siteSetting->wasRecentlyCreated) {
+                $this->command->info('Site setting "' . $setting['key'] . '" already exists, skipping.');
+            } else {
+                $this->command->info('Site setting "' . $setting['key'] . '" created.');
+            }
         }
     }
 }

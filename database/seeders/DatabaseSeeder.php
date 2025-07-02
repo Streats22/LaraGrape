@@ -6,6 +6,7 @@ use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\TailwindConfig;
+use App\Models\Page;
 
 class DatabaseSeeder extends Seeder
 {
@@ -71,5 +72,19 @@ class DatabaseSeeder extends Seeder
                 'minify_css' => true,
             ]
         );
+
+        // Seed default pages
+        $page = Page::firstOrCreate(
+            ['slug' => 'home'],
+            [
+                // ...attributes...
+            ]
+        );
+
+        if (!$page->wasRecentlyCreated) {
+            $this->command->info('Page "home" already exists, skipping.');
+        } else {
+            $this->command->info('Page "home" created.');
+        }
     }
 }
