@@ -21,6 +21,7 @@ use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\ViewField;
 use Wiebenieuwenhuis\FilamentCodeEditor\Components\CodeEditor;
+use Filament\Forms\Components\TagsInput;
 
 class CustomBlockResource extends Resource
 {
@@ -89,6 +90,10 @@ class CustomBlockResource extends Resource
                                                     ->numeric()
                                                     ->default(0)
                                                     ->helperText('Order in block manager'),
+                                                TagsInput::make('tags')
+                                                    ->label('Tags')
+                                                    ->placeholder('e.g. hero, card, form')
+                                                    ->helperText('Add tags to help search and reuse blocks'),
                                             ]),
                                     ]),
                             ]),
@@ -122,6 +127,19 @@ class CustomBlockResource extends Resource
                                             ->helperText('Write your PHP/Blade code here. This will only be executed on the frontend, not in the admin preview.'),
                                     ]),
                             ]),
+                        Tabs\Tab::make('Variables')
+                            ->schema([
+                                Section::make('Reusable Variables')
+                                    ->description('Define variables (e.g., title, content) that can be used in your block code as {{ $variable }}.')
+                                    ->schema([
+                                        KeyValue::make('variables')
+                                            ->label('Variables')
+                                            ->keyLabel('Variable Name')
+                                            ->valueLabel('Default Value')
+                                            ->addActionLabel('Add Variable')
+                                            ->helperText('Define variables that can be used in your HTML, CSS, or PHP/Blade code.'),
+                                    ]),
+                            ]),
                         Tabs\Tab::make('Preview')
                             ->schema([
                                 Section::make('Block Preview')
@@ -134,6 +152,18 @@ class CustomBlockResource extends Resource
                                                 }
                                                 $content = $record->getCompleteContent();
                                                 return view('filament.components.block-preview', ['content' => $content]);
+                                            })
+                                            ->columnSpanFull(),
+                                    ]),
+                            ]),
+                        Tabs\Tab::make('Examples & Help')
+                            ->schema([
+                                Section::make('Block Examples & Conventions')
+                                    ->description('Reference for building custom blocks')
+                                    ->schema([
+                                        Placeholder::make('examples_help')
+                                            ->content(function () {
+                                                return view('filament.components.block-examples-help');
                                             })
                                             ->columnSpanFull(),
                                     ]),
@@ -174,6 +204,9 @@ class CustomBlockResource extends Resource
                 Tables\Columns\TextColumn::make('sort_order')
                     ->sortable(),
                 
+                Tables\Columns\TagsColumn::make('tags')
+                    ->label('Tags'),
+                
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable(),
@@ -189,10 +222,48 @@ class CustomBlockResource extends Resource
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
+                Tables\Actions\Action::make('clone')
+                    ->label('Clone')
+                    ->icon('heroicon-o-document-duplicate')
+                    ->action(function ($record, $livewire) {
+                        $newBlock = $record->replicate();
+                        $newBlock->name = $record->name . ' (Copy)';
+                        $newBlock->slug = $record->slug . '-copy-' . uniqid();
+                        $newBlock->push();
+                        $livewire->redirect(CustomBlockResource::getUrl('edit', ['record' => $newBlock->getKey()]));
+                    })
+                    ->color('secondary'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\BulkAction::make('export')
+                        ->label('Export as JSON')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->action(function ($records) {
+                            $json = $records->toJson(JSON_PRETTY_PRINT);
+                            return response($json)
+                                ->header('Content-Type', 'application/json')
+                                ->header('Content-Disposition', 'attachment; filename=custom-blocks-export.json');
+                        }),
+                    Tables\Actions\BulkAction::make('import')
+                        ->label('Import from JSON')
+                        ->icon('heroicon-o-arrow-up-tray')
+                        ->form([
+                            Forms\Components\FileUpload::make('import_file')
+                                ->label('JSON File')
+                                ->acceptedFileTypes(['application/json'])
+                                ->required(),
+                        ])
+                        ->action(function ($data, $livewire) {
+                            $file = $data['import_file'];
+                            $json = file_get_contents($file->getRealPath());
+                            $blocks = json_decode($json, true);
+                            foreach ($blocks as $block) {
+                                \App\Models\CustomBlock::create($block);
+                            }
+                            $livewire->notify('success', 'Blocks imported successfully!');
+                        }),
                 ]),
             ])
             ->defaultSort('sort_order', 'asc');

@@ -21,6 +21,7 @@ use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\CodeEditor;
 use Filament\Forms\Components\KeyValue;
+use Illuminate\Support\Str;
 
 class SiteSettingsResource extends Resource
 {
@@ -40,24 +41,52 @@ class SiteSettingsResource extends Resource
     {
         return $form
             ->schema([
-                TextInput::make('key')
-                    ->label('Key')
-                    ->visible(fn ($record) => $record->exists)
-                    ->unique(ignoreRecord: true)
-                    ->helperText('A unique key for this setting (e.g. site_name, header_logo_text)')
-                    ->reactive()
-                    ->afterStateUpdated(function ($set, $state, $context) {
-                        // Only auto-generate if creating and key is empty
-                        if ($context === 'create' && empty($state)) {
-                            $set('key', str(
-                                request()->input('label', '')
-                            )->slug('_'));
-                        }
-                    }),
+            
                 Tabs::make('Site Configuration')
                     ->tabs([
                         Tabs\Tab::make('General')
                             ->schema([
+                                Select::make('label_select')
+                                    ->label('Label')
+                                    ->options([
+                                        'Site General' => 'Site General',
+                                        'Site SEO' => 'Site SEO',
+                                        'Site Footer' => 'Site Footer',
+                                        'Site Header' => 'Site Header',
+                                        'Site Social' => 'Site Social',
+                                        'Site Analytics' => 'Site Analytics',
+                                        'Site Contact' => 'Site Contact',
+                                        'Site Legal' => 'Site Legal',
+                                        'Site Theme' => 'Site Theme',
+                                        'Other (custom)' => 'Other (custom)',
+                                    ])
+                                    ->required()
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($set, $state) {
+                                        if ($state !== 'Other (custom)') {
+                                            $set('label', $state);
+                                            $set('key', \Illuminate\Support\Str::slug($state, '_'));
+                                        } else {
+                                            $set('label', '');
+                                            $set('key', '');
+                                        }
+                                    })
+                                    ->helperText('Choose a label or select "Other (custom)" to enter your own.'),
+                                TextInput::make('label')
+                                    ->label('Custom Label')
+                                    ->placeholder('Enter a custom label')
+                                    ->required(fn ($get) => $get('label_select') === 'Other (custom)')
+                                    ->visible(fn ($get) => $get('label_select') === 'Other (custom)')
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($set, $state) {
+                                        $set('key', \Illuminate\Support\Str::slug($state, '_'));
+                                    }),
+                                TextInput::make('key')
+                                    ->label('Key')
+                                    ->disabled()
+                                    ->dehydrated()
+                                    ->required()
+                                    ->helperText('Auto-generated from the label.'),
                                 Section::make('General Site Settings')
                                     ->schema([
                                         Grid::make(2)
@@ -414,10 +443,13 @@ console.log("Site loaded!");')
 
     public static function mutateFormDataBeforeCreate(array $data): array
     {
-        // Auto-generate label from key if not set
-        if (empty($data['label']) && !empty($data['key'])) {
-            $data['label'] = self::prettifyKey($data['key']);
-        }
+        $data['key'] = \Illuminate\Support\Str::slug($data['label'] ?? '', '_');
+        return $data;
+    }
+
+    public static function mutateFormDataBeforeSave(array $data): array
+    {
+        $data['key'] = \Illuminate\Support\Str::slug($data['label'] ?? '', '_');
         return $data;
     }
 
