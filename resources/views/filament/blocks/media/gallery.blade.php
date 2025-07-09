@@ -1,7 +1,7 @@
 {{-- @block id="gallery" label="Image Gallery" description="A responsive image gallery with multiple images" --}}
 <div class="gallery-block py-8">
     <div class="container mx-auto px-4">
-        <h3 class="text-2xl font-bold mb-6 text-center" data-gjs-type="text" data-gjs-name="gallery-title">Image Gallery</h3>
+        <h3 class="text-2xl font-bold mb-6 text-center text-primary-900" data-gjs-type="text" data-gjs-name="gallery-title">Image Gallery</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div class="gallery-item">
                 <img 
@@ -28,7 +28,7 @@
                     data-gjs-name="gallery-image-3">
             </div>
         </div>
-        <p class="text-gray-600 mt-6 text-center" data-gjs-type="text" data-gjs-name="gallery-description">
+        <p class="text-primary-600 mt-6 text-center" data-gjs-type="text" data-gjs-name="gallery-description">
             Add a description for your gallery here. Explain what these images represent or showcase.
         </p>
     </div>

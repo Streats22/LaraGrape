@@ -13,6 +13,7 @@
     $siteCss = Vite::asset('resources/css/site.css');
     $grapesCss = Vite::asset('resources/css/filament-grapesjs-editor.css');
     $adminCss = Vite::asset('resources/css/filament/admin/theme.css');
+    $utilitiesCss = asset('css/laralgrape-utilities.css');
     
     // Try to get the record (could be a model or a slug)
     $record = null;
@@ -56,6 +57,18 @@
         'route_parameters' => request()->route()->parameters() ?? []
     ]);
 @endphp
+@php
+    $tailwindConfig = \App\Models\TailwindConfig::getActive();
+    $tailwindCssVars = $tailwindConfig ? $tailwindConfig->generateCss() : '';
+    $appCss = Vite::asset('resources/css/app.css');
+    $adminCss = Vite::asset('resources/css/filament/admin/theme.css');
+    $utilitiesCssContent = file_exists(public_path('css/laralgrape-utilities.css')) ? file_get_contents(public_path('css/laralgrape-utilities.css')) : '';
+@endphp
+@if($tailwindConfig)
+    <style>
+        {!! $tailwindConfig->generateCss() !!}
+    </style>
+@endif
 
 <x-dynamic-component :component="$getFieldWrapperView()" :field="$field">
     <div class="grapesjs-editor-wrapper" id="wrapper-{{ $id }}">
@@ -94,7 +107,14 @@
     @push('scripts')
         <script type="module" src="{{ Vite::asset('resources/js/grapesjs-editor.js') }}"></script>
         <script>
-            window.grapesjsCanvasStyles = [@json($appCss)];
+            window.grapesjsCanvasStyles = [
+                @json($appCss),
+                @json($adminCss),
+                `<style>{!! $utilitiesCssContent !!}</style>`,
+                `<style>{{ $tailwindCssVars }}</style>`
+            ];
+            // Debug: Log the styles array before GrapesJS loads
+            console.log('grapesjsCanvasStyles (backend):', window.grapesjsCanvasStyles);
         </script>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
@@ -125,7 +145,7 @@
             width: 100vw;
             height: 100vh;
             z-index: 99999 !important;
-            background: white;
+            background: var(--grapey-primary-50, #fff);
             box-sizing: border-box;
             isolation: isolate;
         }
@@ -140,8 +160,8 @@
         }
         
         .fullscreen-toggle-btn {
-            background: rgba(59, 130, 246, 0.9);
-            border: 2px solid #3b82f6;
+            background: var(--grapey-primary-500, #3b82f6);
+            border: 2px solid var(--grapey-primary-500, #3b82f6);
             border-radius: 8px;
             padding: 12px;
             cursor: pointer;
@@ -158,20 +178,20 @@
         }
         
         .fullscreen-toggle-btn:hover {
-            background: rgba(59, 130, 246, 1);
-            border-color: #2563eb;
+            background: var(--grapey-primary-600, #2563eb);
+            border-color: var(--grapey-primary-600, #2563eb);
             box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
             transform: translateY(-1px);
         }
         
         .fullscreen-toggle-btn svg {
-            color: white;
+            color: var(--grapey-primary-50, #fff);
             width: 20px;
             height: 20px;
         }
         
         .fullscreen-toggle-btn:hover svg {
-            color: white;
+            color: var(--grapey-primary-50, #fff);
         }
         
         .grapesjs-editor {
@@ -179,7 +199,8 @@
             overflow: hidden;
             width: 100% !important;
             min-height: 400px;
-            background: #ffffff;
+            background: var(--grapey-primary-50, #ffffff);
+            border: 1.5px solid var(--grapey-primary-200, #e5e7eb);
             transition: height 0.3s ease;
         }
         

@@ -3,6 +3,9 @@
  * Works for both frontend and backend (Filament) contexts
  */
 
+// Import grapesjs-parser-postcss if using a bundler (uncomment if needed)
+// import parserPostCSS from 'grapesjs-parser-postcss';
+
 class LaraGrapeGrapesJsEditor {
     constructor(options = {}) {
         this.options = {
@@ -40,6 +43,13 @@ class LaraGrapeGrapesJsEditor {
             console.error(`Editor element with ID ${this.options.containerId} not found`);
             return;
         }
+        // Add PostCSS parser plugin for better CSS variable support
+        const plugins = [];
+        if (typeof parserPostCSS !== 'undefined') {
+            plugins.push(parserPostCSS);
+        } else if (window.parserPostCSS) {
+            plugins.push(window.parserPostCSS);
+        }
         this.editor = grapesjs.init({
             container: editorElement,
             height: this.options.height,
@@ -54,7 +64,8 @@ class LaraGrapeGrapesJsEditor {
             },
             blockManager: {
                 blocks: this.options.blocks
-            }
+            },
+            plugins,
         });
         this.loadExistingContent();
         this.setupChangeListeners();
@@ -64,6 +75,9 @@ class LaraGrapeGrapesJsEditor {
         setTimeout(() => {
             this.editor.refresh();
         }, 100);
+        setTimeout(() => {
+            injectStylesIntoGrapesJsIframe(this.editor, window.grapesjsCanvasStyles);
+        }, 500);
     }
 
     loadExistingContent() {
@@ -385,3 +399,25 @@ class LaraGrapeGrapesJsEditor {
 
 // Export globally
 window.LaraGrapeGrapesJsEditor = LaraGrapeGrapesJsEditor;
+
+function injectStylesIntoGrapesJsIframe(editor, stylesArray) {
+    const iframe = editor.Canvas.getFrameEl();
+    if (!iframe) return;
+    const head = iframe.contentDocument.head;
+    // Remove any previously injected styles to avoid duplicates
+    Array.from(head.querySelectorAll('[data-grapey-injected]')).forEach(el => el.remove());
+    stylesArray.forEach(style => {
+        let el;
+        if (style.startsWith('<style')) {
+            el = document.createElement('style');
+            el.setAttribute('data-grapey-injected', 'true');
+            el.innerHTML = style.replace(/^<style[^>]*>|<\/style>$/g, '');
+        } else if (style.endsWith('.css')) {
+            el = document.createElement('link');
+            el.setAttribute('data-grapey-injected', 'true');
+            el.rel = 'stylesheet';
+            el.href = style;
+        }
+        if (el) head.appendChild(el);
+    });
+}

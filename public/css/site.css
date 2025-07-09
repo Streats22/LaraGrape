@@ -360,6 +360,16 @@ textarea:focus {
 :root {
     /* Example: focus outline color */
     --site-focus-outline: var(--laralgrape-primary-500);
+    --site-link: var(--laralgrape-link);
+}
+
+a, a:link {
+    color: var(--site-link, #3b82f6);
+    text-decoration: underline;
+}
+a:hover, a:focus {
+    color: var(--site-link, #2563eb);
+    text-decoration: underline;
 }
 
 button:focus,

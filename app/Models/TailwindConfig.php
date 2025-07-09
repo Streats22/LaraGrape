@@ -30,6 +30,7 @@ class TailwindConfig extends Model
         'warning_color',
         'error_color',
         'info_color',
+        'link_color',
         'font_family_sans',
         'font_family_serif',
         'font_family_mono',
@@ -108,6 +109,7 @@ class TailwindConfig extends Model
             'warning' => $this->warning_color,
             'error' => $this->error_color,
             'info' => $this->info_color,
+            'link' => $this->link_color,
         ];
 
         foreach ($additionalColors as $name => $color) {
@@ -203,5 +205,106 @@ class TailwindConfig extends Model
         }
 
         return $config;
+    }
+
+    /**
+     * Generate utility classes for all themeable properties using CSS variables.
+     * Example: .bg-primary-500 { background-color: var(--laralgrape-primary-500); }
+     */
+    public function generateUtilityClassesCss(): string
+    {
+        $prefix = $this->css_variables_prefix ?? '--laralgrape';
+        $shades = ['50', '100', '200', '300', '400', '500', '600', '700', '800', '900', '950'];
+        $utilityCss = [];
+
+        // Background, text, and border color utilities for primary shades
+        foreach ($shades as $shade) {
+            $var = $prefix . "-primary-{$shade}";
+            $utilityCss[] = ".bg-primary-{$shade} { background-color: var({$var}) !important; }";
+            $utilityCss[] = ".text-primary-{$shade} { color: var({$var}) !important; }";
+            $utilityCss[] = ".border-primary-{$shade} { border-color: var({$var}) !important; }";
+        }
+
+        // Additional color variables
+        $additional = ['secondary', 'accent', 'success', 'warning', 'error', 'info', 'link'];
+        foreach ($additional as $name) {
+            $var = $prefix . "-{$name}";
+            $utilityCss[] = ".bg-{$name} { background-color: var({$var}) !important; }";
+            $utilityCss[] = ".text-{$name} { color: var({$var}) !important; }";
+            $utilityCss[] = ".border-{$name} { border-color: var({$var}) !important; }";
+        }
+
+        // Border radius utilities
+        if ($this->border_radius_default) {
+            $utilityCss[] = ".rounded { border-radius: var({$prefix}-border-radius) !important; }";
+        }
+        if ($this->border_radius_lg) {
+            $utilityCss[] = ".rounded-lg { border-radius: var({$prefix}-border-radius-lg) !important; }";
+        }
+
+        // Font family utilities
+        $utilityCss[] = ".font-sans { font-family: var({$prefix}-font-sans) !important; }";
+        $utilityCss[] = ".font-serif { font-family: var({$prefix}-font-serif) !important; }";
+        $utilityCss[] = ".font-mono { font-family: var({$prefix}-font-mono) !important; }";
+
+        return implode("\n", $utilityCss) . "\n";
+    }
+
+    /**
+     * Generate dynamic themeable CSS for site.css
+     */
+    public function generateSiteThemeCss(): string
+    {
+        $prefix = $this->css_variables_prefix ?? '--laralgrape';
+        return <<<CSS
+/* Dynamic themeable rules for site.css */
+:root {
+    /* Example: focus outline color */
+    --site-focus-outline: var({$prefix}-primary-500);
+    --site-link: var({$prefix}-link);
+}
+
+a, a:link {
+    color: var(--site-link, #3b82f6);
+    text-decoration: underline;
+}
+a:hover, a:focus {
+    color: var(--site-link, #2563eb);
+    text-decoration: underline;
+}
+
+button:focus,
+a:focus,
+input:focus,
+textarea:focus {
+    outline: 2px solid var({$prefix}-primary-500);
+    outline-offset: 2px;
+}
+CSS;
+    }
+
+    /**
+     * Generate dynamic themeable CSS for admin/theme.css
+     */
+    public function generateAdminThemeCss(): string
+    {
+        $prefix = $this->css_variables_prefix ?? '--laralgrape';
+        return <<<CSS
+/* Dynamic themeable rules for admin/theme.css */
+.fi-sidebar {
+    background: linear-gradient(135deg, var({$prefix}-primary-600), var({$prefix}-primary-700));
+}
+.fi-btn-primary {
+    background: linear-gradient(135deg, var({$prefix}-primary-500), var({$prefix}-primary-600));
+}
+.fi-btn-primary:hover {
+    background: linear-gradient(135deg, var({$prefix}-primary-600), var({$prefix}-primary-700));
+}
+.fi-tabs-tab.is-active {
+    background: var({$prefix}-primary-500);
+    color: white;
+    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+}
+CSS;
     }
 } 
