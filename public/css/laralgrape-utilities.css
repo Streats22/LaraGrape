@@ -49,6 +49,9 @@
 .bg-info { background-color: var(--laralgrape-info) !important; }
 .text-info { color: var(--laralgrape-info) !important; }
 .border-info { border-color: var(--laralgrape-info) !important; }
+.bg-link { background-color: var(--laralgrape-link) !important; }
+.text-link { color: var(--laralgrape-link) !important; }
+.border-link { border-color: var(--laralgrape-link) !important; }
 .rounded { border-radius: var(--laralgrape-border-radius) !important; }
 .rounded-lg { border-radius: var(--laralgrape-border-radius-lg) !important; }
 .font-sans { font-family: var(--laralgrape-font-sans) !important; }

@@ -62,7 +62,7 @@
     </style>
     <link rel="stylesheet" href="{{ asset('css/laralgrape-utilities.css') }}">
 </head>
-<body class="bg-gradient-to-br from-primary-50 via-white to-secondary/10 text-primary-900 antialiased min-h-screen flex flex-col" x-data="siteLayout()">
+<body class="bg-gradient-to-br from-primary-50 via-white to-secondary/10 text-primary-900 antialiased min-h-screen flex flex-col dark:bg-black dark:text-primary-50" x-data="siteLayout()">
     @if(auth()->check())
         @include('components.layout.grapejs-edit-bar')
     @endif
@@ -70,9 +70,9 @@
     @include('components.layout.header')
 
     <!-- Main Content -->
-    <main class="laralgrape-container flex-1 flex flex-col bg-white/80 rounded-t-3xl shadow-xl mt-4">
+    <main class="flex-1 flex flex-col bg-primary-50 dark:bg-primary-900 px-4">
         <!-- Page Content -->
-        <div class="page-content flex-1 px-4 py-8">
+        <div class="page-content flex-1 py-8 bg-primary-50 dark:bg-primary-900 transition-colors">
             {!! $renderedHtml !!}
         </div>
         

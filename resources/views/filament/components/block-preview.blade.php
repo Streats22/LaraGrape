@@ -1,6 +1,6 @@
-<div class="block-preview-container">
+<div class="block-preview-container border-l-4 border-accent shadow-lg">
     <div class="bg-primary-50 border border-primary-200 rounded-lg p-4">
-        <div class="text-sm text-primary-600 mb-2">Block Preview:</div>
+        <div class="text-sm text-primary-700 mb-2 font-semibold">Block Preview:</div>
         <div class="block-preview-content bg-primary-50 rounded border p-4">
             {!! $content !!}
         </div>

@@ -6,6 +6,18 @@
 // Import grapesjs-parser-postcss if using a bundler (uncomment if needed)
 // import parserPostCSS from 'grapesjs-parser-postcss';
 
+// Helper to fetch rendered block preview from backend
+async function fetchBlockPreview(blockId) {
+    const url = `/admin/block-preview/${blockId}`;
+    try {
+        const response = await fetch(url, { credentials: 'same-origin' });
+        if (!response.ok) throw new Error('Failed to fetch block preview');
+        return await response.text();
+    } catch (e) {
+        return `<div style='color:red;'>Preview error: ${e.message}</div>`;
+    }
+}
+
 class LaraGrapeGrapesJsEditor {
     constructor(options = {}) {
         this.options = {
@@ -37,7 +49,7 @@ class LaraGrapeGrapesJsEditor {
         this.setupEventListeners();
     }
 
-    initializeEditor() {
+    async initializeEditor() {
         const editorElement = document.getElementById(this.options.containerId);
         if (!editorElement) {
             console.error(`Editor element with ID ${this.options.containerId} not found`);
@@ -49,6 +61,17 @@ class LaraGrapeGrapesJsEditor {
             plugins.push(parserPostCSS);
         } else if (window.parserPostCSS) {
             plugins.push(window.parserPostCSS);
+        }
+        // Instead of using static blocks, fetch previews dynamically
+        const blockManagerBlocks = [];
+        for (const block of this.options.blocks) {
+            // Only fetch preview for file-based blocks (not custom or dynamic blocks)
+            if (block.id && !block.is_custom) {
+                const html = await fetchBlockPreview(block.id);
+                blockManagerBlocks.push({ ...block, content: html });
+            } else {
+                blockManagerBlocks.push(block);
+            }
         }
         this.editor = grapesjs.init({
             container: editorElement,
@@ -63,7 +86,7 @@ class LaraGrapeGrapesJsEditor {
                 scripts: [],
             },
             blockManager: {
-                blocks: this.options.blocks
+                blocks: blockManagerBlocks
             },
             plugins,
         });

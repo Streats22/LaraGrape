@@ -76,4 +76,14 @@ class AdminPageController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Serve a rendered block preview for GrapesJS/editor
+     * GET /admin/block-preview/{blockId}
+     */
+    public function blockPreview($blockId)
+    {
+        $html = app(\App\Services\BlockService::class)->renderBlockPreview($blockId);
+        return response($html, 200, ['Content-Type' => 'text/html']);
+    }
 }

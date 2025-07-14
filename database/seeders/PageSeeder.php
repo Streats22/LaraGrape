@@ -12,11 +12,11 @@ class PageSeeder extends Seeder
         Page::firstOrCreate([
             'slug' => 'home',
         ], [
-            'title' => 'Home',
+                'title' => 'Home',
             'content' => '<h1>Welcome to the Home Page</h1>',
-            'is_published' => true,
-            'show_in_menu' => true,
-            'sort_order' => 1,
+                'is_published' => true,
+                'show_in_menu' => true,
+                'sort_order' => 1,
         ]);
         Page::firstOrCreate([
             'slug' => 'about',
@@ -24,8 +24,8 @@ class PageSeeder extends Seeder
             'title' => 'About Us',
             'content' => '<h1>About Our Company</h1>',
             'is_published' => true,
-            'show_in_menu' => true,
-            'sort_order' => 2,
+                'show_in_menu' => true,
+                'sort_order' => 2,
         ]);
         Page::firstOrCreate([
             'slug' => 'contact',

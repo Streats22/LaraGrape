@@ -53,7 +53,25 @@ class TailwindConfigSeeder extends Seeder
                 'breakpoint_xl' => '1280px',
                 'enable_custom_css' => false,
                 'custom_css' => '',
-                'enable_dark_mode' => false,
+                'enable_dark_mode' => true,
+                'dark_primary_50' => '#18181b', // main background
+                'dark_primary_100' => '#232336', // card background
+                'dark_primary_200' => '#27272a', // input background
+                'dark_primary_300' => '#313244', // border/section background
+                'dark_primary_400' => '#3f3f46', // subtle border
+                'dark_primary_500' => '#a855f7', // accent purple
+                'dark_primary_600' => '#7c3aed', // accent purple dark
+                'dark_primary_700' => '#6d28d9', // accent purple darker
+                'dark_primary_800' => '#581c87', // accent purple darkest
+                'dark_primary_900' => '#3b0764', // almost black
+                'dark_primary_950' => '#18181b', // fallback background
+                'dark_secondary_color' => '#334155', // sidebar/nav
+                'dark_accent_color' => '#f59e0b', // accent (yellow/orange)
+                'dark_success_color' => '#22d3ee', // cyan for success
+                'dark_warning_color' => '#fbbf24', // yellow for warning
+                'dark_error_color' => '#ef4444', // red for error
+                'dark_info_color' => '#60a5fa', // blue for info
+                'dark_link_color' => '#8b5cf6', // purple for links
                 'enable_animations' => true,
                 'css_variables_prefix' => '--laralgrape',
                 'purge_css' => true,
@@ -62,6 +80,40 @@ class TailwindConfigSeeder extends Seeder
             $this->command->info('Default Tailwind config created and set as active.');
         } else {
             $this->command->info('Active Tailwind config already exists: ' . $active->name);
+        }
+        // Backfill missing dark mode values for existing configs
+        $defaults = [
+            'dark_primary_50' => '#18181b',
+            'dark_primary_100' => '#232336',
+            'dark_primary_200' => '#27272a',
+            'dark_primary_300' => '#313244',
+            'dark_primary_400' => '#3f3f46',
+            'dark_primary_500' => '#a855f7',
+            'dark_primary_600' => '#7c3aed',
+            'dark_primary_700' => '#6d28d9',
+            'dark_primary_800' => '#581c87',
+            'dark_primary_900' => '#3b0764',
+            'dark_primary_950' => '#18181b',
+            'dark_secondary_color' => '#334155',
+            'dark_accent_color' => '#f59e0b',
+            'dark_success_color' => '#22d3ee',
+            'dark_warning_color' => '#fbbf24',
+            'dark_error_color' => '#ef4444',
+            'dark_info_color' => '#60a5fa',
+            'dark_link_color' => '#8b5cf6',
+        ];
+        foreach (TailwindConfig::all() as $config) {
+            $updated = false;
+            foreach ($defaults as $key => $value) {
+                if (empty($config->$key)) {
+                    $config->$key = $value;
+                    $updated = true;
+                }
+            }
+            if ($updated) {
+                $config->save();
+                $this->command->info('Backfilled dark mode values for: ' . $config->name);
+            }
         }
         // Output the active config for test
         $active = TailwindConfig::where('is_active', true)->first();

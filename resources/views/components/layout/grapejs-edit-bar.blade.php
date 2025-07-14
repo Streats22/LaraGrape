@@ -1,32 +1,32 @@
 <div 
     x-data="grapejsEditBar()"
-    class="grapejs-edit-bar bg-gradient-to-r from-primary-600 via-accent to-secondary text-primary-50 shadow-lg rounded-b-xl px-6 py-3 flex items-center justify-between gap-4"
+    class="grapejs-edit-bar bg-primary-50 dark:bg-primary-900 from-primary-600 via-accent to-secondary text-primary-50 shadow-lg px-6 py-3 flex items-center justify-between gap-4 dark:bg-black dark:text-primary-50"
     style="box-shadow:0 2px 8px rgba(124,58,237,0.2);font-size:15px;"
 >
-    <span class="font-medium">🍇 Edit this page with GrapesJS</span>
+    <span class="font-medium text-primary-900 dark:text-secondary-400">🍇 Edit this page with GrapesJS</span>
     <div class="flex gap-2">
-        <button 
-            @click="startEditing()"
-            x-show="!isEditing"
-            class="grapejs-btn grapejs-btn-primary"
-        >
-            Edit
-        </button>
-        <button 
-            @click="saveContent()"
-            x-show="isEditing"
-            class="grapejs-btn grapejs-btn-success"
-            :disabled="isSaving"
-        >
-            <span x-text="isSaving ? 'Saving...' : 'Save'"></span>
-        </button>
-        <button 
-            @click="exitEditing()"
-            x-show="isEditing"
-            class="grapejs-btn grapejs-btn-danger"
-        >
-            Exit
-        </button>
+    <button 
+        @click="startEditing()"
+        x-show="!isEditing"
+        class="grapejs-btn grapejs-btn-primary"
+    >
+        Edit
+    </button>
+    <button 
+        @click="saveContent()"
+        x-show="isEditing"
+        class="grapejs-btn grapejs-btn-success"
+        :disabled="isSaving"
+    >
+        <span x-text="isSaving ? 'Saving...' : 'Save'"></span>
+    </button>
+    <button 
+        @click="exitEditing()"
+        x-show="isEditing"
+        class="grapejs-btn grapejs-btn-danger"
+    >
+        Exit
+    </button>
     </div>
     <!-- Status message -->
     <div 
@@ -58,33 +58,49 @@
         background: var(--grapey-primary-600, #8b5cf6);
         color: var(--grapey-primary-50, #fff);
     }
-    
+    .dark .grapejs-btn-primary {
+        background: var(--laralgrape-primary-700, #7c3aed);
+        color: var(--laralgrape-primary-50, #fff);
+    }
     .grapejs-btn-primary:hover:not(:disabled) {
         background: var(--grapey-primary-700, #7c3aed);
-        transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        color: var(--grapey-primary-50, #fff);
     }
-    
+    .dark .grapejs-btn-primary:hover:not(:disabled) {
+        background: var(--laralgrape-primary-800, #581c87);
+        color: var(--laralgrape-primary-100, #fff);
+    }
     .grapejs-btn-success {
         background: var(--grapey-success, #10b981);
         color: var(--grapey-primary-50, #fff);
     }
-    
+    .dark .grapejs-btn-success {
+        background: var(--laralgrape-success, #22d3ee);
+        color: var(--laralgrape-primary-900, #fff);
+    }
     .grapejs-btn-success:hover:not(:disabled) {
         background: var(--grapey-success-dark, #059669);
-        transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        color: var(--grapey-primary-50, #fff);
     }
-    
+    .dark .grapejs-btn-success:hover:not(:disabled) {
+        background: var(--laralgrape-success, #22d3ee);
+        color: var(--laralgrape-primary-900, #fff);
+    }
     .grapejs-btn-danger {
         background: var(--grapey-error, #ef4444);
         color: var(--grapey-primary-50, #fff);
     }
-    
+    .dark .grapejs-btn-danger {
+        background: var(--laralgrape-error, #ef4444);
+        color: var(--laralgrape-primary-900, #fff);
+    }
     .grapejs-btn-danger:hover:not(:disabled) {
         background: var(--grapey-error-dark, #dc2626);
-        transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        color: var(--grapey-primary-50, #fff);
+    }
+    .dark .grapejs-btn-danger:hover:not(:disabled) {
+        background: var(--laralgrape-error, #ef4444);
+        color: var(--laralgrape-primary-100, #fff);
     }
     
     .save-status {
