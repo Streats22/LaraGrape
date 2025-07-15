@@ -1,3 +1,6 @@
+@php
+        use Illuminate\Support\Facades\Blade;
+@endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
@@ -73,7 +76,11 @@
     <main class="flex-1 flex flex-col bg-primary-50 dark:bg-primary-900 px-4">
         <!-- Page Content -->
         <div class="page-content flex-1 py-8 bg-primary-50 dark:bg-primary-900 transition-colors">
-            {!! $renderedHtml !!}
+            @if (!empty($page->blade_content))
+                {!! Blade::render($page->blade_content, ['page' => $page]) !!}
+            @else
+                {!! $renderedHtml !!}
+            @endif
         </div>
         
         @if(auth()->check())

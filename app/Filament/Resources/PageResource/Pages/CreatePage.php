@@ -23,17 +23,27 @@ class CreatePage extends CreateRecord
         if (isset($data['grapesjs_data']) && is_array($data['grapesjs_data'])) {
             $grapesjsData = $data['grapesjs_data'];
             
-            // Extract HTML and CSS from GrapesJS data
-            $data['grapesjs_html'] = $grapesjsData['html'] ?? null;
-            $data['grapesjs_css'] = $grapesjsData['css'] ?? null;
+            // Get the converter service
+            $converterService = app(\App\Services\GrapesJsConverterService::class);
             
-            // Keep the full data structure for future use
-            $data['grapesjs_data'] = $grapesjsData;
+            // Process the data for saving (convert to Blade components)
+            $processedData = $converterService->processForSaving($grapesjsData);
+            
+            // Extract HTML and CSS from processed data
+            $data['grapesjs_html'] = $processedData['html'] ?? null;
+            $data['grapesjs_css'] = $processedData['css'] ?? null;
+            
+            // Keep the full processed data structure
+            $data['grapesjs_data'] = $processedData;
+            
+            // Also save Blade content
+            $data['blade_content'] = $converterService->convertToBlade($processedData);
             
             \Log::info('GrapesJS data processed', [
                 'html' => $data['grapesjs_html'],
                 'css' => $data['grapesjs_css'],
-                'full_data' => $data['grapesjs_data']
+                'full_data' => $data['grapesjs_data'],
+                'blade_content' => $data['blade_content'],
             ]);
         } else {
             \Log::warning('GrapesJS data not found or not array', [

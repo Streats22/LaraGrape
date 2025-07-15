@@ -44,10 +44,14 @@ class EditPage extends EditRecord
             // Keep the full processed data structure
             $data['grapesjs_data'] = $processedData;
             
+            // Also save Blade content
+            $data['blade_content'] = $converterService->convertToBlade($processedData);
+            
             \Log::info('GrapesJS data processed', [
                 'html' => $data['grapesjs_html'],
                 'css' => $data['grapesjs_css'],
-                'full_data' => $data['grapesjs_data']
+                'full_data' => $data['grapesjs_data'],
+                'blade_content' => $data['blade_content'],
             ]);
         } else {
             \Log::warning('GrapesJS data not found or not array', [
