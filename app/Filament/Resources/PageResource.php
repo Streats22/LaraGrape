@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Grid;
+use App\Services\GrapesJsConverterService;
 
 class PageResource extends Resource
 {
@@ -95,7 +96,8 @@ class PageResource extends Resource
                                     ->schema([
                                         GrapesJsEditor::make('grapesjs_data')
                                             ->label('Page Content')
-                                            ->height('800px'),
+                                            ->height('800px')
+                                            ->columnSpanFull(),
                                     ]),
                             ]),
                         

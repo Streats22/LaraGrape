@@ -110,13 +110,13 @@ class PageController extends Controller
 
             // Convert to Blade content (string)
             $bladeContent = $this->converterService->convertToBlade($processedData);
-
+            
             \Log::info('Saving GrapesJS data', [
                 'page_id' => $page->id,
                 'grapesjs_data' => $processedData,
                 'blade_content' => $bladeContent,
             ]);
-
+            
             // Update the page
             $page->update([
                 'grapesjs_data' => $processedData,

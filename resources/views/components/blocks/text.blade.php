@@ -7,4 +7,4 @@
     <p class="text-primary-800 dark:text-primary-100 text-lg leading-relaxed font-medium">
         {{ $slot }}
     </p>
-</div>
+</div> 

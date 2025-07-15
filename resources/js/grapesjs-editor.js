@@ -32,9 +32,14 @@ class LaraGrapeGrapesJsEditor {
             onSave: null, // custom save handler
             ...options
         };
+        
         this.editor = null;
         this.wrapper = null;
         this.fullscreenBtn = null;
+        this.isFormSubmitting = false; // Track form submission state
+        this.backupKey = `grapesjs_backup_${this.options.containerId}`;
+        
+        // Initialize the editor
         this.init();
     }
 
@@ -45,6 +50,12 @@ class LaraGrapeGrapesJsEditor {
             console.error('GrapesJS is not loaded');
             return;
         }
+        
+        // Store the editor instance on the DOM element for global access
+        if (this.wrapper) {
+            this.wrapper.laraGrapeEditor = this;
+        }
+        
         this.initializeEditor();
         this.setupEventListeners();
     }
@@ -55,13 +66,23 @@ class LaraGrapeGrapesJsEditor {
             console.error(`Editor element with ID ${this.options.containerId} not found`);
             return;
         }
+        
+        console.log('Initializing GrapesJS editor with options:', {
+            containerId: this.options.containerId,
+            mode: this.options.mode,
+            isDisabled: this.options.isDisabled,
+            statePath: this.options.statePath,
+            initialData: this.options.initialData
+        });
+        
         // Add PostCSS parser plugin for better CSS variable support
         const plugins = [];
         if (typeof parserPostCSS !== 'undefined') {
             plugins.push(parserPostCSS);
-        } else if (window.parserPostCSS) {
-            plugins.push(window.parserPostCSS);
+        } else if (typeof grapesjsParserPostcss !== 'undefined') {
+            plugins.push(grapesjsParserPostcss);
         }
+        
         // Instead of using static blocks, fetch previews dynamically
         const blockManagerBlocks = [];
         for (const block of this.options.blocks) {
@@ -73,6 +94,7 @@ class LaraGrapeGrapesJsEditor {
                 blockManagerBlocks.push(block);
             }
         }
+        
         this.editor = grapesjs.init({
             container: editorElement,
             height: this.options.height,
@@ -90,27 +112,184 @@ class LaraGrapeGrapesJsEditor {
             },
             plugins,
         });
-        this.loadExistingContent();
-        this.setupChangeListeners();
+        
+        // Add debugging to detect when editor gets cleared
+        this.editor.on('component:selected', () => {
+            console.log('Editor component selected');
+        });
+        
+        this.editor.on('component:add', () => {
+            console.log('Editor component added');
+        });
+        
+        this.editor.on('component:remove', () => {
+            console.log('Editor component removed');
+        });
+        
+        this.editor.on('canvas:clear', () => {
+            console.log('WARNING: Editor canvas cleared! This might be causing the blank editor issue.');
+            // Try to restore from backup if this happens during form submission
+            if (this.isFormSubmitting) {
+                console.log('Form submission detected, attempting to restore from backup...');
+                setTimeout(() => {
+                    const backupData = this.restoreFromBackup();
+                    if (backupData && backupData.html) {
+                        this.editor.setComponents(backupData.html);
+                        if (backupData.css) {
+                            this.editor.setStyle(backupData.css);
+                        }
+                        console.log('Content restored from backup after canvas clear');
+                    }
+                }, 100);
+            }
+        });
+        
+        this.editor.on('destroy', () => {
+            console.log('WARNING: Editor destroyed! This might be causing the blank editor issue.');
+        });
+        
+        // Check if disabled before loading content
         if (this.options.isDisabled) {
+            console.log('Editor is disabled, clearing canvas');
             this.editor.Commands.run('core:canvas-clear');
+        } else {
+            // Load existing content
+            this.loadExistingContent();
         }
+        
+        // Setup change listeners
+        this.setupChangeListeners();
+        
+        // Setup form submission handlers
+        this.setupFilamentFormSubmission();
+        
+        // Setup other event listeners
+        this.setupEventListeners();
+        
+        // Refresh the editor and inject styles
         setTimeout(() => {
             this.editor.refresh();
         }, 100);
         setTimeout(() => {
             injectStylesIntoGrapesJsIframe(this.editor, window.grapesjsCanvasStyles);
         }, 500);
+        
+        console.log('GrapesJS editor initialized successfully');
     }
 
     loadExistingContent() {
         const data = this.options.initialData;
-        if (data && data.html) {
-            this.editor.setComponents(data.html);
+        console.log('Loading existing content with data:', data);
+        
+        // Handle different data structures
+        let html = null;
+        let css = null;
+        
+        if (data) {
+            // If data has html and css directly (from original_grapesjs)
+            if (data.html && data.css) {
+                html = data.html;
+                css = data.css;
+            }
+            // If data has grapesjs_data with original_grapesjs
+            else if (data.grapesjs_data && data.grapesjs_data.original_grapesjs) {
+                html = data.grapesjs_data.original_grapesjs.html;
+                css = data.grapesjs_data.original_grapesjs.css;
+            }
+            // If data has grapesjs_data with html and css directly
+            else if (data.grapesjs_data && data.grapesjs_data.html) {
+                html = data.grapesjs_data.html;
+                css = data.grapesjs_data.css;
+            }
+            // If data is wrapped in grapesjs_data object (from Filament form)
+            else if (data.grapesjs_data) {
+                const grapesjsData = data.grapesjs_data;
+                if (grapesjsData.original_grapesjs) {
+                    html = grapesjsData.original_grapesjs.html;
+                    css = grapesjsData.original_grapesjs.css;
+                } else if (grapesjsData.html) {
+                    html = grapesjsData.html;
+                    css = grapesjsData.css;
+                }
+            }
         }
-        if (data && data.css) {
-            this.editor.setStyle(data.css);
+        
+        // If no content found, try to restore from localStorage backup
+        if (!html && !css) {
+            const backupData = this.restoreFromBackup();
+            if (backupData) {
+                html = backupData.html;
+                css = backupData.css;
+                console.log('Restored content from localStorage backup');
+            }
         }
+        
+        console.log('Final HTML to load:', html);
+        console.log('Final CSS to load:', css);
+        
+        if (html) {
+            console.log('Setting components with HTML:', html);
+            this.editor.setComponents(html);
+        } else {
+            console.log('No HTML content found, editor will be empty');
+        }
+        
+        if (css) {
+            console.log('Setting styles with CSS:', css);
+            this.editor.setStyle(css);
+        } else {
+            console.log('No CSS content found');
+        }
+        
+        // Debug: Check if editor has content after loading
+        setTimeout(() => {
+            const currentHtml = this.editor.getHtml();
+            const currentCss = this.editor.getCss();
+            console.log('Editor content after loading - HTML:', currentHtml);
+            console.log('Editor content after loading - CSS:', currentCss);
+        }, 100);
+    }
+
+    restoreFromBackup() {
+        try {
+            const backupData = localStorage.getItem(this.backupKey);
+            if (backupData) {
+                const data = JSON.parse(backupData);
+                console.log('Found backup data in localStorage:', data);
+                return data;
+            }
+        } catch (error) {
+            console.error('Error restoring from backup:', error);
+        }
+        return null;
+    }
+    
+    // Check if editor is empty and restore if needed
+    checkAndRestoreContent() {
+        if (!this.editor) return;
+        
+        const components = this.editor.getComponents();
+        const html = this.editor.getHtml();
+        
+        // Check if editor is essentially empty (no meaningful content)
+        const isEmpty = !components.length || 
+                       (html && html.trim() === '<body></body>') ||
+                       (html && html.trim() === '<body><div></div></body>');
+        
+        if (isEmpty && this.isFormSubmitting) {
+            console.log('Editor appears empty during form submission, attempting to restore...');
+            const backupData = this.restoreFromBackup();
+            if (backupData && backupData.html) {
+                this.editor.setComponents(backupData.html);
+                if (backupData.css) {
+                    this.editor.setStyle(backupData.css);
+                }
+                console.log('Content restored successfully');
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     setupChangeListeners() {
@@ -133,49 +312,77 @@ class LaraGrapeGrapesJsEditor {
         this.editor.on('change', updateState);
     }
 
-    updateFilamentFormState() {
+    updateFilamentFormState(data = null) {
         if (!this.editor) return;
         
         const html = this.editor.getHtml();
         const css = this.editor.getCss();
-        const data = {
+        const editorData = data || {
             html: html,
             css: css,
             data: this.editor.getProjectData(),
             last_updated: new Date().toISOString()
         };
         
+        // Wrap the data in the structure that Filament expects
+        const formData = {
+            grapesjs_data: editorData
+        };
+        
+        console.log('Updating Filament form state:', {
+            statePath: this.options.statePath,
+            data: formData
+        });
+        
         const form = this.wrapper.closest('form');
         if (form) {
+            // Method 1: Update hidden input field by name
             let hiddenInput = form.querySelector(`input[name="${this.options.statePath}"]`);
+            if (hiddenInput) {
+                hiddenInput.value = JSON.stringify(formData);
+                hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
+                hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+                console.log('Updated hidden input by name:', this.options.statePath);
+            }
+            
+            // Method 2: Find Filament field wrapper and update its input
+            const fieldWrapper = this.wrapper.closest('[data-field-wrapper]');
+            if (fieldWrapper) {
+                const filamentInput = fieldWrapper.querySelector('input[type="hidden"]');
+                if (filamentInput) {
+                    filamentInput.value = JSON.stringify(formData);
+                    filamentInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    filamentInput.dispatchEvent(new Event('change', { bubbles: true }));
+                    console.log('Updated Filament field wrapper input');
+                }
+            }
+            
+            // Method 3: Create hidden input if it doesn't exist
             if (!hiddenInput) {
                 hiddenInput = document.createElement('input');
                 hiddenInput.type = 'hidden';
                 hiddenInput.name = this.options.statePath;
                 form.appendChild(hiddenInput);
+                hiddenInput.value = JSON.stringify(formData);
+                hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
+                hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+                console.log('Created and updated new hidden input for:', this.options.statePath);
             }
             
-            // Update the hidden input value
-            hiddenInput.value = JSON.stringify(data);
-            
-            // Trigger events to notify Filament
-            hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
-            hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
-            
-            // Also trigger Filament-specific events
-            const fieldWrapper = this.wrapper.closest('[data-field-wrapper]');
+            // Method 4: Trigger Filament-specific events
             if (fieldWrapper) {
                 fieldWrapper.dispatchEvent(new CustomEvent('filament:field-changed', {
-                    detail: { value: data },
+                    detail: { value: formData },
                     bubbles: true
                 }));
             }
             
-            // Trigger form change event
             form.dispatchEvent(new CustomEvent('filament:form-changed', {
-                detail: { field: this.options.statePath, value: data },
+                detail: { field: this.options.statePath, value: formData },
                 bubbles: true
             }));
+            
+            console.log('Filament form state update completed');
         }
     }
 
@@ -183,7 +390,50 @@ class LaraGrapeGrapesJsEditor {
     syncToFormBeforeSubmit() {
         if (this.options.mode === 'backend' && this.editor) {
             console.log('Syncing GrapesJS content to form before submit...');
-            this.updateFilamentFormState();
+            
+            // Set form submission flag
+            this.isFormSubmitting = true;
+            
+            // Reset flag after 5 seconds to prevent false positives
+            setTimeout(() => {
+                this.isFormSubmitting = false;
+            }, 5000);
+            
+            try {
+                // Get current editor content
+                const html = this.editor.getHtml();
+                const css = this.editor.getCss();
+                const data = {
+                    html: html,
+                    css: css,
+                    data: this.editor.getProjectData(),
+                    last_updated: new Date().toISOString()
+                };
+                
+                console.log('Current editor content to sync:', data);
+                
+                // Update Filament form state with the correct structure
+                this.updateFilamentFormState(data);
+                
+                // Store backup in localStorage
+                localStorage.setItem(this.backupKey, JSON.stringify(data));
+                console.log('Backup data stored in localStorage');
+                
+                // Dispatch custom event for other components to listen to
+                const event = new CustomEvent('grapesjs-sync', {
+                    detail: {
+                        field: this.options.statePath,
+                        data: { grapesjs_data: data }
+                    }
+                });
+                document.dispatchEvent(event);
+                
+                console.log('GrapesJS content synced successfully');
+                
+            } catch (error) {
+                console.error('Error syncing GrapesJS content:', error);
+                this.isFormSubmitting = false; // Reset flag on error
+            }
         }
     }
 
@@ -240,8 +490,36 @@ class LaraGrapeGrapesJsEditor {
                 
                 if (response.ok && result.success) {
                     this.showSaveStatus('success', result.message || 'Page builder content saved!');
-                    // Also update the form state to keep it in sync
+                    
+                    // Update the Filament form state with the saved data
+                    // This ensures that when the user clicks "Save Changes" in Filament,
+                    // it will have the latest GrapesJS data
+                    const savedData = {
+                        html: html,
+                        css: css,
+                        data: this.editor.getProjectData(),
+                        last_updated: new Date().toISOString(),
+                        saved_via_ajax: true
+                    };
+                    
+                    // Update Filament's form state
                     this.updateFilamentFormState();
+                    
+                    // Also ensure the form field is properly updated
+                    const form = this.wrapper.closest('form');
+                    if (form) {
+                        // Dispatch a custom event for any listeners
+                        const syncEvent = new CustomEvent('grapesjs-sync', {
+                            detail: {
+                                field: this.options.statePath,
+                                data: savedData
+                            },
+                            bubbles: true
+                        });
+                        
+                        form.dispatchEvent(syncEvent);
+                        console.log('Dispatched grapesjs-sync event after AJAX save:', savedData);
+                    }
                 } else {
                     this.showSaveStatus('error', 'Save failed: ' + (result.message || result.error || 'Unknown error'));
                 }
@@ -306,38 +584,154 @@ class LaraGrapeGrapesJsEditor {
                 });
             }
             
-            // Listen for Filament form submission to sync content
-            const form = this.wrapper.closest('form');
-            if (form) {
-                // Listen for form submit events
-                form.addEventListener('submit', (e) => {
-                    this.syncToFormBeforeSubmit();
-                });
-                
-                // Listen for Filament-specific events
-                form.addEventListener('filament:submit', (e) => {
-                    this.syncToFormBeforeSubmit();
-                });
-                
-                // Also listen for button clicks that might submit the form
-                document.addEventListener('click', (e) => {
-                    const target = e.target;
-                    if (target && (target.type === 'submit' || target.classList.contains('fi-btn--primary'))) {
-                        // Check if this button is in the same form
-                        const buttonForm = target.closest('form');
-                        if (buttonForm === form) {
-                            setTimeout(() => {
-                                this.syncToFormBeforeSubmit();
-                            }, 10);
-                        }
-                    }
-                });
-            }
+            // Enhanced form submission handling for Filament
+            this.setupFilamentFormSubmission();
         }
         
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 this.exitFullscreen();
+            }
+        });
+    }
+
+    setupFilamentFormSubmission() {
+        const form = this.wrapper.closest('form');
+        if (!form) return;
+
+        console.log('Setting up Filament form submission handlers...');
+
+        // Method 1: Listen for form submit events and sync data
+        form.addEventListener('submit', (e) => {
+            console.log('Form submit event detected - syncing data...');
+            this.syncToFormBeforeSubmit();
+        });
+
+        // Method 2: Listen for Filament-specific events
+        form.addEventListener('filament:submit', (e) => {
+            console.log('Filament submit event detected');
+            this.syncToFormBeforeSubmit();
+        });
+
+        // Method 3: Listen for button clicks that might submit the form - MORE AGGRESSIVE
+        document.addEventListener('mousedown', (e) => {
+            const target = e.target;
+            if (target && (
+                target.type === 'submit' || 
+                target.classList.contains('fi-btn--primary') ||
+                target.closest('.fi-btn--primary') ||
+                target.textContent?.toLowerCase().includes('save') ||
+                target.textContent?.toLowerCase().includes('create') ||
+                target.textContent?.toLowerCase().includes('update')
+            )) {
+                // Check if this button is in the same form
+                const buttonForm = target.closest('form');
+                if (buttonForm === form) {
+                    console.log('Save button mousedown detected, syncing content immediately...');
+                    // Sync immediately on mousedown (before the click event)
+                    this.syncToFormBeforeSubmit();
+                }
+            }
+        });
+
+        // Method 4: Listen for Filament's internal form submission
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'data-loading') {
+                    const loadingElement = mutation.target;
+                    if (loadingElement.getAttribute('data-loading') === 'true') {
+                        console.log('Filament loading state detected, syncing content...');
+                        this.syncToFormBeforeSubmit();
+                    }
+                }
+            });
+        });
+
+        // Observe the form for loading state changes
+        observer.observe(form, {
+            attributes: true,
+            attributeFilter: ['data-loading']
+        });
+
+        // Method 5: Use Filament's internal events if available
+        if (window.Filament) {
+            window.Filament.on('form-submit', () => {
+                console.log('Filament form-submit event detected');
+                this.syncToFormBeforeSubmit();
+            });
+        }
+
+        // Method 6: Periodic sync to ensure data is always up to date
+        setInterval(() => {
+            if (this.editor && this.options.mode === 'backend') {
+                this.updateFilamentFormState();
+            }
+        }, 5000); // Sync every 5 seconds
+        
+        // Method 6.5: Periodic check for empty editor during form submission
+        setInterval(() => {
+            if (this.editor && this.isFormSubmitting) {
+                this.checkAndRestoreContent();
+            }
+        }, 1000); // Check every second during form submission
+
+        // Method 7: Listen for beforeunload events (when user tries to leave page)
+        window.addEventListener('beforeunload', (e) => {
+            if (this.editor && this.options.mode === 'backend') {
+                console.log('Page unload detected, syncing content...');
+                this.syncToFormBeforeSubmit();
+            }
+        });
+
+        // Method 8: Listen for Livewire events if available
+        if (window.Livewire) {
+            window.Livewire.on('form-submit', () => {
+                console.log('Livewire form-submit event detected');
+                this.syncToFormBeforeSubmit();
+            });
+        }
+
+        // Method 9: Override Filament's form submission if possible
+        if (window.Filament && window.Filament.forms) {
+            const originalSubmit = window.Filament.forms.submit;
+            if (originalSubmit) {
+                window.Filament.forms.submit = (...args) => {
+                    console.log('Filament forms.submit intercepted');
+                    this.syncToFormBeforeSubmit();
+                    return originalSubmit.apply(this, args);
+                };
+            }
+        }
+        
+        // Method 10: Detect when the editor element is about to be removed/replaced
+        const editorObserver = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'childList') {
+                    mutation.removedNodes.forEach((node) => {
+                        if (node.id === this.options.containerId || 
+                            node.querySelector && node.querySelector(`#${this.options.containerId}`)) {
+                            console.log('WARNING: Editor element is being removed! This will cause the editor to go blank.');
+                            this.syncToFormBeforeSubmit();
+                        }
+                    });
+                }
+            });
+        });
+        
+        // Observe the parent of the editor for changes
+        const editorParent = form.parentElement;
+        if (editorParent) {
+            editorObserver.observe(editorParent, {
+                childList: true,
+                subtree: true
+            });
+        }
+        
+        // Method 11: Listen for page visibility changes (when user switches tabs)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && this.editor && this.options.mode === 'backend') {
+                console.log('Page hidden, syncing content...');
+                this.syncToFormBeforeSubmit();
             }
         });
     }
@@ -444,3 +838,37 @@ function injectStylesIntoGrapesJsIframe(editor, stylesArray) {
         if (el) head.appendChild(el);
     });
 }
+
+// Global function to sync GrapesJS data before form submission
+function syncGrapesJsData() {
+    console.log('Global syncGrapesJsData called');
+    // Find all GrapesJS editors on the page
+    const editors = document.querySelectorAll('.grapesjs-editor');
+    editors.forEach(editor => {
+        const editorInstance = editor.laraGrapeEditor;
+        if (editorInstance && typeof editorInstance.syncToFormBeforeSubmit === 'function') {
+            editorInstance.syncToFormBeforeSubmit();
+        }
+    });
+    
+    // Also try to find editors by wrapper
+    const wrappers = document.querySelectorAll('.grapejs-editor-wrapper');
+    wrappers.forEach(wrapper => {
+        const editorInstance = wrapper.laraGrapeEditor;
+        if (editorInstance && typeof editorInstance.syncToFormBeforeSubmit === 'function') {
+            editorInstance.syncToFormBeforeSubmit();
+        }
+    });
+}
+
+// Make it globally available
+window.syncGrapesJsData = syncGrapesJsData;
+
+// Also listen for the custom grapesjs-sync event
+document.addEventListener('grapesjs-sync', function(event) {
+    console.log('Received grapesjs-sync event:', event.detail);
+    const { field, data } = event.detail;
+    
+    // Log the event for debugging purposes
+    console.log('GrapesJS sync event received for field:', field, 'with data:', data);
+});

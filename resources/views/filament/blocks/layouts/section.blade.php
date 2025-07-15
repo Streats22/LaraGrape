@@ -2,6 +2,6 @@
 <section {{ $attributes->merge(['class' => 'py-12 md:py-20']) }}>
     @if(!empty($title))
         <h2 class="text-3xl font-bold mb-6">{{ $title }}</h2>
-    @endif
+@endif 
     {{ $slot }}
 </section> 

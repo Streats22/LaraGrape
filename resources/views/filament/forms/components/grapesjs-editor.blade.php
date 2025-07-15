@@ -117,8 +117,20 @@
             console.log('grapesjsCanvasStyles (backend):', window.grapesjsCanvasStyles);
         </script>
         <script>
+            // Global function to sync GrapesJS data - can be called from anywhere
+            window.syncGrapesJsData = function() {
+                if (window.grapesjsEditorInstance) {
+                    console.log('Global sync function called');
+                    window.grapesjsEditorInstance.syncToFormBeforeSubmit();
+                    return true;
+                }
+                return false;
+            };
+
             document.addEventListener('DOMContentLoaded', function() {
-                new window.LaraGrapeGrapesJsEditor({
+                console.log('GrapesJS Editor initial data:', @json($state));
+                
+                const editor = new window.LaraGrapeGrapesJsEditor({
                     containerId: '{{ $id }}',
                     mode: 'backend',
                     statePath: '{{ $statePath }}',
@@ -127,6 +139,112 @@
                     isDisabled: {{ $isDisabled ? 'true' : 'false' }},
                     height: '{{ $height }}'
                 });
+
+                // Store the editor instance globally for access
+                window.grapesjsEditorInstance = editor;
+
+                // Additional Filament form submission handling
+                const form = document.querySelector('form[wire\\:submit]');
+                if (form) {
+                    console.log('Filament form found, setting up additional handlers...');
+
+                    // Method 1: Listen for Livewire events
+                    document.addEventListener('livewire:load', function () {
+                        if (window.Livewire) {
+                            window.Livewire.on('form-submit', function () {
+                                console.log('Livewire form-submit event detected');
+                                if (window.grapesjsEditorInstance) {
+                                    window.grapesjsEditorInstance.syncToFormBeforeSubmit();
+                                }
+                            });
+                        }
+                    });
+
+                    // Method 2: Listen for Filament's wire:submit events
+                    form.addEventListener('wire:submit', function (e) {
+                        console.log('Wire submit event detected');
+                        if (window.grapesjsEditorInstance) {
+                            window.grapesjsEditorInstance.syncToFormBeforeSubmit();
+                        }
+                    });
+
+                    // Method 3: Intercept all form submissions
+                    const originalSubmit = form.submit;
+                    form.submit = function(e) {
+                        console.log('Form submit intercepted (original method)');
+                        if (window.grapesjsEditorInstance) {
+                            window.grapesjsEditorInstance.syncToFormBeforeSubmit();
+                        }
+                        return originalSubmit.call(this, e);
+                    };
+
+                    // Method 4: Listen for button clicks more aggressively
+                    document.addEventListener('click', function(e) {
+                        const target = e.target;
+                        if (target && (
+                            target.type === 'submit' ||
+                            target.getAttribute('wire:click')?.includes('save') ||
+                            target.getAttribute('wire:click')?.includes('create') ||
+                            target.getAttribute('wire:click')?.includes('update') ||
+                            target.textContent?.toLowerCase().includes('save') ||
+                            target.textContent?.toLowerCase().includes('create') ||
+                            target.textContent?.toLowerCase().includes('update')
+                        )) {
+                            const buttonForm = target.closest('form');
+                            if (buttonForm === form) {
+                                console.log('Save button clicked (enhanced detection)');
+                                setTimeout(() => {
+                                    if (window.grapesjsEditorInstance) {
+                                        window.grapesjsEditorInstance.syncToFormBeforeSubmit();
+                                    }
+                                }, 50);
+                            }
+                        }
+                    });
+
+                    // Method 5: Use MutationObserver to detect form state changes
+                    const observer = new MutationObserver(function(mutations) {
+                        mutations.forEach(function(mutation) {
+                            if (mutation.type === 'attributes') {
+                                const element = mutation.target;
+                                if (element.getAttribute('data-loading') === 'true' || 
+                                    element.classList.contains('fi-loading') ||
+                                    element.getAttribute('wire:loading') === 'true') {
+                                    console.log('Loading state detected, syncing content...');
+                                    if (window.grapesjsEditorInstance) {
+                                        window.grapesjsEditorInstance.syncToFormBeforeSubmit();
+                                    }
+                                }
+                            }
+                        });
+                    });
+
+                    observer.observe(form, {
+                        attributes: true,
+                        attributeFilter: ['data-loading', 'wire:loading', 'class']
+                    });
+
+                    // Method 6: Periodic sync as backup
+                    setInterval(function() {
+                        if (window.grapesjsEditorInstance) {
+                            window.grapesjsEditorInstance.updateFilamentFormState();
+                        }
+                    }, 3000);
+
+                    // Method 7: Override Filament's form submission
+                    if (window.Filament) {
+                        const originalFormSubmit = window.Filament.forms?.submit;
+                        if (originalFormSubmit) {
+                            window.Filament.forms.submit = function(...args) {
+                                console.log('Filament form submit intercepted');
+                                if (window.grapesjsEditorInstance) {
+                                    window.grapesjsEditorInstance.syncToFormBeforeSubmit();
+                                }
+                                return originalFormSubmit.apply(this, args);
+                            };
+                        }
+                    }
+                }
             });
         </script>
     @endpush

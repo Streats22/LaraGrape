@@ -78,8 +78,7 @@
         <div class="page-content flex-1 py-8 bg-primary-50 dark:bg-primary-900 transition-colors">
             @if (!empty($page->blade_content))
                 {!! Blade::render($page->blade_content, ['page' => $page]) !!}
-            @else
-                {!! $renderedHtml !!}
+           
             @endif
         </div>
         
