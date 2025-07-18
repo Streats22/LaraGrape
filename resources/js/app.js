@@ -1,6 +1,12 @@
 import './bootstrap';
 import Alpine from 'alpinejs';
 
+// Create a store for GrapesJS editing state
+Alpine.store('grapejs', {
+    isEditing: false,
+    isSaving: false
+});
+
 // Register Alpine components
 Alpine.data('siteLayout', () => ({
     mobileMenuOpen: false,
@@ -27,49 +33,70 @@ Alpine.data('grapejsEditBar', () => ({
     
     init() {
         console.log('Alpine grapejsEditBar initialized');
+        // Sync local state with store
+        this.isEditing = this.$store.grapejs.isEditing;
+        this.isSaving = this.$store.grapejs.isSaving;
+        
         // Wait for the frontend editor to be initialized
         this.waitForEditor();
     },
     
     waitForEditor() {
+        // Try multiple ways to find the editor
         if (window.frontendGrapesJsEditor) {
             this.grapejsEditor = window.frontendGrapesJsEditor;
             console.log('Frontend GrapesJS editor found:', this.grapejsEditor);
-        } else {
-            console.log('Frontend GrapesJS editor not found yet, retrying...');
-            setTimeout(() => this.waitForEditor(), 100);
+            return;
         }
+        
+        // Also check if the editor is available in the global scope
+        if (window.LaraGrapeGrapesJsEditor && window.grapesjs) {
+            console.log('GrapesJS and LaraGrapeGrapesJsEditor available, but editor instance not found yet');
+        }
+        
+        console.log('Frontend GrapesJS editor not found yet, retrying...');
+        setTimeout(() => this.waitForEditor(), 100);
     },
     
     startEditing() {
         console.log('Starting editing...');
         this.isEditing = true;
+        this.$store.grapejs.isEditing = true;
         this.originalScroll = window.scrollY;
-        
-        // Hide page content and show editor
-        const pageContent = document.querySelector('.page-content');
-        const editorWrapper = document.querySelector('.grapejs-editor-wrapper');
-        
-        if (pageContent) pageContent.style.display = 'none';
-        if (editorWrapper) editorWrapper.style.display = 'block';
         
         // Make sure we have the editor instance
         if (!this.grapejsEditor) {
             this.waitForEditor();
+            // Try to initialize the editor if it doesn't exist
+            this.tryInitializeEditor();
+        }
+    },
+    
+    tryInitializeEditor() {
+        // If the editor doesn't exist, try to create it
+        if (!window.frontendGrapesJsEditor && window.LaraGrapeGrapesJsEditor && window.grapesjs) {
+            console.log('Attempting to initialize editor...');
+            try {
+                window.frontendGrapesJsEditor = new window.LaraGrapeGrapesJsEditor({
+                    containerId: 'grapejs-frontend-editor',
+                    mode: 'frontend',
+                    saveUrl: window.saveGrapesjsUrl || '',
+                    blocks: window.grapesjsBlocks || [],
+                    initialData: window.pageGrapesjsData || {}
+                });
+                this.grapejsEditor = window.frontendGrapesJsEditor;
+                console.log('Editor initialized successfully');
+            } catch (error) {
+                console.error('Failed to initialize editor:', error);
+            }
         }
     },
     
     exitEditing() {
         console.log('Exiting editing...');
         this.isEditing = false;
+        this.$store.grapejs.isEditing = false;
         this.saveStatus = '';
-        
-        // Show page content and hide editor
-        const pageContent = document.querySelector('.page-content');
-        const editorWrapper = document.querySelector('.grapejs-editor-wrapper');
-        
-        if (pageContent) pageContent.style.display = '';
-        if (editorWrapper) editorWrapper.style.display = 'none';
         
         // Restore scroll position
         window.scrollTo(0, this.originalScroll);
@@ -86,6 +113,7 @@ Alpine.data('grapejsEditBar', () => ({
         }
         
         this.isSaving = true;
+        this.$store.grapejs.isSaving = true;
         
         try {
             console.log('Calling grapejsEditor.saveContent()...');
@@ -97,6 +125,7 @@ Alpine.data('grapejsEditBar', () => ({
             this.showSaveStatus('error', 'Save failed: ' + error.message);
         } finally {
             this.isSaving = false;
+            this.$store.grapejs.isSaving = false;
         }
     },
     

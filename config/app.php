@@ -165,7 +165,6 @@ return [
 
         // Filament Panel Provider
         App\Providers\Filament\AdminPanelProvider::class,
-        App\Providers\BoilerplateServiceProvider::class,
     ],
 
 ];

@@ -103,8 +103,16 @@ class BlockService
         // Extract block metadata from comments
         $metadata = $this->extractMetadata($content);
         
-        // Get the HTML content (remove comments and extract the actual HTML)
-        $htmlContent = $this->extractHtmlContent($content);
+        // Get the view name for proper Blade rendering
+        $viewName = $this->bladeViewNameFromPath($file->getPathname());
+        
+        // Render the full block content as a Blade template (not editor preview)
+        try {
+            $htmlContent = view($viewName, ['isEditorPreview' => false])->render();
+        } catch (\Throwable $e) {
+            // Fallback to extracted content if rendering fails
+            $htmlContent = $this->extractHtmlContent($content);
+        }
         
         if (empty($htmlContent)) {
             return null;
@@ -300,7 +308,7 @@ class BlockService
         }
         $lastModified = filemtime($blockFile);
         $cacheKey = 'block_preview_' . $blockId . '_' . $lastModified;
-        return Cache::rememberForever($cacheKey, function () use ($blockFile) {
+        return Cache::remember($cacheKey, 300, function () use ($blockFile) { // Cache for 5 minutes instead of forever
             $viewName = $this->bladeViewNameFromPath($blockFile);
             try {
                 return view($viewName, ['isEditorPreview' => true])->render();
@@ -336,5 +344,23 @@ class BlockService
     {
         $relative = str_replace(resource_path('views') . '/', '', $path);
         return str_replace(['/', '.blade.php'], ['.', ''], $relative);
+    }
+
+    /**
+     * Clear all block caches
+     */
+    public function clearBlockCaches(): void
+    {
+        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($this->blocksPath));
+        foreach ($iterator as $file) {
+            if ($file->isFile() && str_ends_with($file->getFilename(), '.blade.php')) {
+                $content = File::get($file->getPathname());
+                $metadata = $this->extractMetadata($content);
+                $id = $metadata['id'] ?? $file->getBasename('.blade.php');
+                $lastModified = filemtime($file->getPathname());
+                $cacheKey = 'block_preview_' . $id . '_' . $lastModified;
+                Cache::forget($cacheKey);
+            }
+        }
     }
 } 

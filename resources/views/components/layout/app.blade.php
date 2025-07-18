@@ -75,16 +75,21 @@
     <!-- Main Content -->
     <main class="flex-1 flex flex-col bg-primary-50 dark:bg-primary-900 px-4">
         <!-- Page Content -->
-        <div class="page-content flex-1 py-8 bg-primary-50 dark:bg-primary-900 transition-colors">
+        <div class="page-content flex-1 py-8 bg-primary-50 dark:bg-primary-900 transition-colors" 
+             x-data="{}" 
+             x-show="!$store.grapejs?.isEditing" 
+             style="{{ auth()->check() ? 'display: none;' : '' }}">
             @if (!empty($page->blade_content))
                 {!! Blade::render($page->blade_content, ['page' => $page]) !!}
-           
             @endif
         </div>
         
         @if(auth()->check())
             <!-- GrapesJS Editor Container (hidden by default) -->
-            <div class="grapejs-editor-wrapper" style="display:none; min-height: 700px;">
+            <div class="grapejs-editor-wrapper" 
+                 x-data="{}" 
+                 x-show="$store.grapejs?.isEditing" 
+                 style="display: none; min-height: 700px;">
                 <div id="grapejs-frontend-editor" style="min-height: 700px;"></div>
             </div>
         @endif
@@ -113,19 +118,28 @@
             window.grapesjsBlocks = @json($grapesjsBlocks);
             window.pageGrapesjsData = @json($editingData ?? []);
             window.saveGrapesjsUrl = "{{ route('page.save-grapesjs', ['slug' => $page->slug]) }}";
+            
             function initializeFrontendEditor() {
                 if (typeof grapesjs !== 'undefined' && typeof window.LaraGrapeGrapesJsEditor !== 'undefined') {
-                    window.frontendGrapesJsEditor = new window.LaraGrapeGrapesJsEditor({
-                        containerId: 'grapejs-frontend-editor',
-                        mode: 'frontend',
-                        saveUrl: window.saveGrapesjsUrl,
-                        blocks: window.grapesjsBlocks,
-                        initialData: window.pageGrapesjsData
-                    });
+                    try {
+                        window.frontendGrapesJsEditor = new window.LaraGrapeGrapesJsEditor({
+                            containerId: 'grapejs-frontend-editor',
+                            mode: 'frontend',
+                            saveUrl: window.saveGrapesjsUrl,
+                            blocks: window.grapesjsBlocks,
+                            initialData: window.pageGrapesjsData
+                        });
+                        console.log('Frontend GrapesJS editor initialized successfully');
+                    } catch (error) {
+                        console.error('Failed to initialize frontend GrapesJS editor:', error);
+                    }
                 } else {
+                    console.log('GrapesJS or LaraGrapeGrapesJsEditor not available yet, retrying...');
                     setTimeout(initializeFrontendEditor, 200);
                 }
             }
+            
+            // Initialize when DOM is ready
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', initializeFrontendEditor);
             } else {

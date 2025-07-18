@@ -9,7 +9,7 @@ class GrapesJsEditor extends Field
 {
     protected string $view = 'filament.forms.components.grapesjs-editor';
     
-    protected string $height = '700px';
+    protected string $height = '100vh';
 
     protected function setUp(): void
     {
