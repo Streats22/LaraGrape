@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Atlas package root (parent of bin/)
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PLAYGROUND="${ROOT}/../atlas-playground"
+
+echo "Atlas: dump-autoload"
+composer dump-autoload --working-dir="${ROOT}"
+
+if [[ ! -d "${PLAYGROUND}" ]]; then
+  echo "sync-playground: no directory at ${PLAYGROUND} — skip playground refresh."
+  exit 0
+fi
+
+echo "Playground: update path package + dump-autoload"
+composer update streatsdesign/atlas-builder --no-interaction --working-dir="${PLAYGROUND}"
+composer dump-autoload --working-dir="${PLAYGROUND}"
+
+echo "Done."

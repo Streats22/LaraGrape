@@ -1,0 +1,51 @@
+{
+    "$schema": "https://getcomposer.org/schema.json",
+    "name": "streatsdesign/atlas-builder",
+    "description": "Laravel-native page builder core: blocks, adapters, rendering, and caching.",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "illuminate/contracts": "^11.0|^12.0|^13.0",
+        "illuminate/database": "^11.0|^12.0|^13.0",
+        "illuminate/support": "^11.0|^12.0|^13.0",
+        "illuminate/view": "^11.0|^12.0|^13.0",
+        "illuminate/cache": "^11.0|^12.0|^13.0",
+        "illuminate/validation": "^11.0|^12.0|^13.0",
+        "livewire/livewire": "^3.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^9.0|^10.0",
+        "phpunit/phpunit": "^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Streats\\Atlas\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Streats\\Atlas\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Streats\\Atlas\\AtlasServiceProvider"
+            ],
+            "aliases": {
+                "Atlas": "Streats\\Atlas\\Facades\\Atlas"
+            }
+        }
+    },
+    "suggest": {
+        "filament/filament": "Map field descriptors to Filament forms (FieldDescriptorToFilament).",
+        "laravel/nova": "Map field descriptors to Nova fields (FieldDescriptorToNova)."
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "scripts": {
+        "test": "@php vendor/bin/phpunit",
+        "sync-playground": "bash bin/sync-playground"
+    }
+}

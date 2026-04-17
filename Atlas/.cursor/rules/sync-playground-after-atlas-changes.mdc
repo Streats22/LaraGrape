@@ -1,0 +1,19 @@
+---
+description: Refresh atlas-playground after editing this Laravel package
+globs: src/**,resources/**,config/**,routes/**,database/**,composer.json
+alwaysApply: false
+---
+
+# Keep atlas-playground in sync
+
+The demo app lives at `../atlas-playground` and depends on this package via a Composer path repository.
+
+After you change package code, views, routes, config, migrations, or `composer.json` here, run from this repo root:
+
+```bash
+composer sync-playground
+```
+
+That dumps autoload here and runs `composer update streatsdesign/atlas-builder` plus `composer dump-autoload` in the playground so symlinked changes and dependency metadata stay current.
+
+If `../atlas-playground` is missing, the script skips the playground step without failing.
